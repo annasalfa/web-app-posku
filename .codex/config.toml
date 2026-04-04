@@ -1,9 +1,0 @@
-[mcp_servers.appwrite]
-command = "uvx"
-args = ["mcp-server-appwrite", "--sites"]
-enabled = true
-
-[mcp_servers.appwrite.env]
-APPWRITE_PROJECT_ID = "69ca43b600217c036e2a"
-APPWRITE_API_KEY = "standard_00603ca2b0840aa30cebd8d73dec00cf6838c383db16200118c3b065a95ccb5349dc66c4cd9e9d81cabf169112818fbf462c014f50e6fbd61456dc4fd18f6f4c4943a011685a2127df9efe045190ebfe03b89840fb81d12b5eb5281c4d152b029dea9821d931c6ef650f2bf40af8db60d176803838ab29fafe771b4402c7fb80"
-APPWRITE_ENDPOINT = "https://sgp.cloud.appwrite.io/v1"
