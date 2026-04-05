@@ -1,9 +1,27 @@
 'use client';
 
+import {Download} from 'lucide-react';
 import {useLocale, useTranslations} from 'next-intl';
 import {useMemo, useState} from 'react';
 
-import {Button, EmptyState, Input, MetricCard, Panel, SectionHeader, SegmentedControl} from '@/components/shared/ui';
+import {
+  Button,
+  DataCard,
+  EmptyState,
+  FieldGroup,
+  Input,
+  MetricCard,
+  PageHeader,
+  PageTransition,
+  SegmentedControl,
+  StatusBadge,
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui';
 import {formatCurrency} from '@/lib/format';
 
 type Period = 'daily' | 'weekly' | 'monthly' | 'custom';
@@ -126,77 +144,124 @@ export function ReportsPage({initialTransactions}: {initialTransactions: Transac
     }
   }
 
+  function paymentTone(method: 'cash' | 'transfer' | 'qris') {
+    return method === 'cash' ? 'cash' : method === 'transfer' ? 'transfer' : 'qris';
+  }
+
   function paymentLabel(method: 'cash' | 'transfer' | 'qris') {
     return method === 'cash' ? common('paymentCash') : method === 'transfer' ? common('paymentTransfer') : common('paymentQris');
   }
 
   return (
-    <div className="space-y-6">
-      <SectionHeader title={t('title')} />
+    <PageTransition className="space-y-6">
+      <PageHeader
+        eyebrow="Reporting"
+        title={t('title')}
+      />
 
-      <Panel className="space-y-4 bg-[var(--color-surface-container-low)]">
-        <SegmentedControl
-          ariaLabel={t('periodFilter')}
-          options={[
-            {label: t('daily'), value: 'daily'},
-            {label: t('weekly'), value: 'weekly'},
-            {label: t('monthly'), value: 'monthly'},
-            {label: t('custom'), value: 'custom'},
-          ]}
-          value={period}
-          onChange={(value) => setPeriod(value as Period)}
-        />
-        {period === 'custom' ? (
-          <div className="grid gap-3 md:grid-cols-2">
+      <DataCard>
+        <div className="space-y-4">
+          <div className="grid gap-3 xl:grid-cols-[minmax(0,1fr)_auto]">
             <div className="space-y-2">
-              <label className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-muted)]" htmlFor="reports-start-date">
-                {t('from')}
-              </label>
-              <Input id="reports-start-date" type="date" value={customStart} onChange={(event) => setCustomStart(event.target.value)} />
+              <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
+                {t('periodFilter')}
+              </p>
+              <SegmentedControl
+                value={period}
+                onChange={(value) => setPeriod(value as Period)}
+                ariaLabel={t('periodFilter')}
+                options={[
+                  {label: t('daily'), value: 'daily'},
+                  {label: t('weekly'), value: 'weekly'},
+                  {label: t('monthly'), value: 'monthly'},
+                  {label: t('custom'), value: 'custom'},
+                ]}
+              />
             </div>
-            <div className="space-y-2">
-              <label className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-muted)]" htmlFor="reports-end-date">
-                {t('until')}
-              </label>
-              <Input id="reports-end-date" type="date" value={customEnd} onChange={(event) => setCustomEnd(event.target.value)} />
+
+            <div className="flex flex-wrap items-end gap-3">
+              <Button
+                onClick={exportCsv}
+                variant="secondary"
+                loading={exporting === 'csv'}
+                disabled={exporting !== null || filteredTransactions.length === 0}
+              >
+                <Download className="size-4" />
+                {exporting === 'csv' ? t('exporting') : t('csv')}
+              </Button>
+              <Button
+                onClick={exportXlsx}
+                loading={exporting === 'xlsx'}
+                disabled={exporting !== null || filteredTransactions.length === 0}
+              >
+                <Download className="size-4" />
+                {exporting === 'xlsx' ? t('exporting') : t('xlsx')}
+              </Button>
             </div>
           </div>
-        ) : null}
-        <div className="flex flex-wrap gap-3">
-          <Button onClick={exportCsv} variant="secondary" disabled={exporting !== null || filteredTransactions.length === 0}>
-            {exporting === 'csv' ? t('exporting') : t('csv')}
-          </Button>
-          <Button onClick={exportXlsx} disabled={exporting !== null || filteredTransactions.length === 0}>
-            {exporting === 'xlsx' ? t('exporting') : t('xlsx')}
-          </Button>
+
+          {period === 'custom' ? (
+            <div className="grid gap-3 md:grid-cols-2">
+              <FieldGroup label={t('from')} htmlFor="reports-start-date">
+                <Input id="reports-start-date" type="date" value={customStart} onChange={(event) => setCustomStart(event.target.value)} />
+              </FieldGroup>
+              <FieldGroup label={t('until')} htmlFor="reports-end-date">
+                <Input id="reports-end-date" type="date" value={customEnd} onChange={(event) => setCustomEnd(event.target.value)} />
+              </FieldGroup>
+            </div>
+          ) : null}
         </div>
-      </Panel>
+      </DataCard>
 
       <div className="grid gap-4 md:grid-cols-3">
-        <MetricCard label={t('summary')} value={formatCurrency(summary.revenue, locale)} detail={t(period)} />
+        <MetricCard label={t('summary')} value={formatCurrency(summary.revenue, locale)} tone="info" detail={t(period)} />
         <MetricCard label={t('ordersLabel')} value={String(summary.orders)} />
         <MetricCard label={t('avgTicketLabel')} value={formatCurrency(summary.average, locale)} />
       </div>
 
-      <Panel className="space-y-4">
-        <h2 className="font-display text-3xl font-semibold tracking-[-0.05em] md:text-4xl">{t(period)}</h2>
+      <DataCard title={t(period)} description={t('summary')}>
         {filteredTransactions.length === 0 ? (
-          <EmptyState title={t('title')} description={t('empty')} className="min-h-40" />
+          <EmptyState title={t('title')} description={t('empty')} className="min-h-56" />
         ) : (
-          <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-            {filteredTransactions.map((transaction) => (
-              <div key={transaction.id} className="rounded-[1.75rem] bg-[var(--color-surface-container-low)] p-4">
-                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-muted)]">{paymentLabel(transaction.paymentMethod)}</p>
-                <p className="mt-4 font-semibold">{transaction.id}</p>
-                <p className="mt-2 font-display text-2xl font-semibold tracking-[-0.05em] md:text-3xl">
-                  {formatCurrency(transaction.totalAmount, locale)}
-                </p>
-              </div>
-            ))}
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>ID</TableHead>
+                  <TableHead>{common('payment')}</TableHead>
+                  <TableHead>{common('total')}</TableHead>
+                  <TableHead>{common('date')}</TableHead>
+                  <TableHead>{common('notes')}</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {filteredTransactions.map((transaction) => (
+                  <TableRow key={transaction.id}>
+                    <TableCell className="max-w-[18rem] break-all font-medium">
+                      {transaction.id}
+                    </TableCell>
+                    <TableCell>
+                      <StatusBadge tone={paymentTone(transaction.paymentMethod)}>
+                        {paymentLabel(transaction.paymentMethod)}
+                      </StatusBadge>
+                    </TableCell>
+                    <TableCell className="font-mono font-semibold">
+                      {formatCurrency(transaction.totalAmount, locale)}
+                    </TableCell>
+                    <TableCell className="text-muted-foreground">
+                      {new Date(transaction.createdAt).toLocaleString(locale === 'id' ? 'id-ID' : 'en-US')}
+                    </TableCell>
+                    <TableCell className="text-muted-foreground">
+                      {transaction.notes || '-'}
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
           </div>
         )}
-      </Panel>
-    </div>
+      </DataCard>
+    </PageTransition>
   );
 }
 

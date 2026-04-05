@@ -4,7 +4,15 @@ import {useLocale, useTranslations} from 'next-intl';
 import {useId, useMemo, useState, useTransition} from 'react';
 
 import {adjustStockAction} from '@/app/actions/stock';
-import {Button, Input, Panel, SectionHeader, StatusPill} from '@/components/shared/ui';
+import {
+  Button,
+  DataCard,
+  FieldGroup,
+  Input,
+  PageHeader,
+  PageTransition,
+  StatusBadge,
+} from '@/components/ui';
 import {formatDateLabel} from '@/lib/format';
 import {cn} from '@/lib/utils/cn';
 
@@ -80,12 +88,14 @@ export function StockPage({initialProducts, initialLogs}: StockPageProps) {
   }
 
   return (
-    <div className="space-y-6">
-      <SectionHeader title={t('title')} />
+    <PageTransition className="space-y-6">
+      <PageHeader
+        eyebrow="Inventory"
+        title={t('title')}
+      />
 
-      <div className="grid gap-4 lg:grid-cols-[0.9fr_1.1fr]">
-        <Panel className="space-y-4 bg-[var(--color-surface-container-low)]">
-          <h2 className="font-display text-3xl font-semibold tracking-[-0.05em] md:text-4xl">{t('products')}</h2>
+      <div className="grid gap-4 xl:grid-cols-[0.86fr_1.14fr]">
+        <DataCard title={t('products')} description={t('lowStock')}>
           <div className="space-y-3">
             {items.map((product) => (
               <button
@@ -94,66 +104,65 @@ export function StockPage({initialProducts, initialLogs}: StockPageProps) {
                 aria-pressed={selected?.id === product.id}
                 onClick={() => setSelectedId(product.id)}
                 className={cn(
-                  'flex w-full cursor-pointer items-center justify-between gap-3 rounded-[1.5rem] p-4 text-left transition duration-200 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgb(0_109_67/18%)]',
+                  'flex w-full items-center justify-between gap-3 rounded-[var(--radius-large)] border p-4 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/60 focus-visible:ring-offset-2',
                   selected?.id === product.id
-                    ? 'bg-[var(--color-surface-container-high)] shadow-[var(--shadow-soft)]'
-                    : 'bg-[var(--color-surface-container-lowest)]',
+                    ? 'border-primary/20 bg-primary/5'
+                    : 'border-border bg-card hover:bg-muted/45',
                 )}
               >
                 <div>
                   <p className="font-semibold">{product.name}</p>
-                  <p className="mt-1 text-xs uppercase tracking-[0.18em] text-[var(--color-muted)]">{product.categoryName}</p>
+                  <p className="mt-1 text-sm text-muted-foreground">{product.categoryName}</p>
                 </div>
-                <StatusPill tone={product.stockQty <= 5 ? 'warning' : 'neutral'}>{product.stockQty}</StatusPill>
+                <StatusBadge tone={product.stockQty <= 5 ? 'warning' : 'neutral'}>
+                  {product.stockQty}
+                </StatusBadge>
               </button>
             ))}
           </div>
-        </Panel>
+        </DataCard>
 
         <div className="space-y-4">
-          <Panel className="space-y-4">
-            <h2 className="font-display text-3xl font-semibold tracking-[-0.05em] md:text-4xl">{selected?.name}</h2>
-            <div className="grid gap-4 md:grid-cols-2">
-              <div className="space-y-2">
-                <label htmlFor={deltaId} className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-muted)]">
-                  {t('delta')}
-                </label>
-                <Input id={deltaId} inputMode="numeric" value={delta} onChange={(event) => setDelta(event.target.value)} />
+          <DataCard description={selected?.categoryName}>
+            <div className="space-y-4">
+              <h2 className="text-2xl font-bold tracking-[-0.03em]">
+                {selected?.name ?? t('title')}
+              </h2>
+              <div className="grid gap-4 md:grid-cols-2">
+                <FieldGroup label={t('delta')} htmlFor={deltaId}>
+                  <Input id={deltaId} inputMode="numeric" value={delta} onChange={(event) => setDelta(event.target.value)} />
+                </FieldGroup>
+                <FieldGroup label={t('reason')} htmlFor={reasonId}>
+                  <Input id={reasonId} value={reason} onChange={(event) => setReason(event.target.value)} />
+                </FieldGroup>
               </div>
-              <div className="space-y-2">
-                <label htmlFor={reasonId} className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-muted)]">
-                  {t('reason')}
-                </label>
-                <Input id={reasonId} value={reason} onChange={(event) => setReason(event.target.value)} />
-              </div>
+              {message ? <p role="alert" aria-live="polite" className="text-sm text-destructive">{message}</p> : null}
+              <Button onClick={applyAdjustment} loading={isPending}>{t('adjust')}</Button>
             </div>
-            {message ? <p role="alert" aria-live="polite" className="text-sm text-[var(--color-error)]">{message}</p> : null}
-            <Button onClick={applyAdjustment} disabled={isPending}>{t('adjust')}</Button>
-          </Panel>
+          </DataCard>
 
-          <Panel className="space-y-4">
-            <h2 className="font-display text-3xl font-semibold tracking-[-0.05em] md:text-4xl">{t('auditTrail')}</h2>
+          <DataCard title={t('auditTrail')}>
             <div className="space-y-3">
               {logs.map((entry) => (
-                <div key={entry.id} className="rounded-[1.5rem] bg-[var(--color-surface-container-low)] p-4">
+                <div key={entry.id} className="rounded-[var(--radius-large)] border border-border bg-muted/35 p-4">
                   <div className="flex items-center justify-between gap-3">
                     <p className="font-semibold">{entry.productName}</p>
-                    <StatusPill tone={entry.changeQty >= 0 ? 'success' : 'warning'}>
+                    <StatusBadge tone={entry.changeQty >= 0 ? 'success' : 'warning'}>
                       {entry.changeQty >= 0 ? `+${entry.changeQty}` : entry.changeQty}
-                    </StatusPill>
+                    </StatusBadge>
                   </div>
-                  <p className="mt-2 text-sm text-[var(--color-muted)]">
+                  <p className="mt-2 text-sm leading-6 text-muted-foreground">
                     {entry.stockBefore} to {entry.stockAfter} / {entry.reason}
                   </p>
-                  <p className="mt-2 text-xs uppercase tracking-[0.16em] text-[var(--color-muted)]">
+                  <p className="mt-2 text-[11px] font-semibold uppercase tracking-[0.12em] text-muted-foreground">
                     {formatDateLabel(entry.createdAt, locale)}
                   </p>
                 </div>
               ))}
             </div>
-          </Panel>
+          </DataCard>
         </div>
       </div>
-    </div>
+    </PageTransition>
   );
 }

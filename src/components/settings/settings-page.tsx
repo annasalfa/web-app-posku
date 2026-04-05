@@ -5,7 +5,7 @@ import {useLocale, useTranslations} from 'next-intl';
 import {useTheme} from 'next-themes';
 
 import {logoutAction} from '@/app/actions/auth';
-import {Button, Panel, SectionHeader, StatusPill} from '@/components/shared/ui';
+import {Button, DataCard, PageHeader, PageTransition, SegmentedControl, StatusBadge} from '@/components/ui';
 import {usePathname, useRouter} from '@/i18n/navigation';
 import {createBrowserClient} from '@/lib/appwrite/client';
 import {useMounted} from '@/lib/utils/use-online-status';
@@ -35,64 +35,64 @@ export function SettingsPage() {
   }
 
   return (
-    <div className="space-y-6">
-      <SectionHeader title={t('title')} />
+    <PageTransition className="space-y-6">
+      <PageHeader
+        eyebrow="Preferences"
+        title={t('title')}
+      />
 
       <div className="grid gap-4 lg:grid-cols-2">
-        <Panel className="space-y-4">
-          <h2 className="font-display text-3xl font-semibold tracking-[-0.05em] md:text-4xl">{common('theme')}</h2>
-          <div className="flex flex-wrap gap-3">
-            {['light', 'dark', 'system'].map((option) => (
-              <Button
-                key={option}
-                variant={mounted && theme === option ? 'primary' : 'secondary'}
-                onClick={() => setTheme(option)}
-              >
-                {common(option as 'light' | 'dark' | 'system')}
-              </Button>
-            ))}
-          </div>
-        </Panel>
+        <DataCard title={common('theme')} description={t('appearance')}>
+          <SegmentedControl
+            value={mounted ? theme ?? 'system' : 'system'}
+            onChange={(value) => setTheme(value)}
+            ariaLabel={common('theme')}
+            options={[
+              {label: common('light'), value: 'light'},
+              {label: common('dark'), value: 'dark'},
+              {label: common('system'), value: 'system'},
+            ]}
+          />
+        </DataCard>
 
-        <Panel className="space-y-4">
-          <h2 className="font-display text-3xl font-semibold tracking-[-0.05em] md:text-4xl">{common('language')}</h2>
-          <div className="flex flex-wrap gap-3">
-            <Button variant={locale === 'id' ? 'primary' : 'secondary'} onClick={() => switchLocale('id')}>
-              Bahasa Indonesia
-            </Button>
-            <Button variant={locale === 'en' ? 'primary' : 'secondary'} onClick={() => switchLocale('en')}>
-              English
-            </Button>
-          </div>
-        </Panel>
+        <DataCard title={common('language')} description={t('locale')}>
+          <SegmentedControl
+            value={locale as 'id' | 'en'}
+            onChange={(value) => switchLocale(value as 'id' | 'en')}
+            ariaLabel={common('language')}
+            options={[
+              {label: 'Bahasa Indonesia', value: 'id'},
+              {label: 'English', value: 'en'},
+            ]}
+          />
+        </DataCard>
       </div>
 
-      <Panel className="space-y-4 bg-[var(--color-surface-container-low)]">
-        <h2 className="font-display text-3xl font-semibold tracking-[-0.05em] md:text-4xl">{t('frontendReadiness')}</h2>
+      <DataCard title={t('frontendReadiness')} description={t('integration')}>
         <div className="grid gap-3 md:grid-cols-2">
-          <div className="rounded-[1.75rem] bg-[var(--color-surface-container-lowest)] p-4">
+          <div className="rounded-[var(--radius-large)] border border-border bg-muted/35 p-4">
             <p className="text-sm font-semibold">{t('appwrite')}</p>
             <div className="mt-3">
-              <StatusPill tone={hasAppwrite ? 'success' : 'warning'}>
+              <StatusBadge tone={hasAppwrite ? 'success' : 'warning'}>
                 {hasAppwrite ? t('configured') : t('missingEnv')}
-              </StatusPill>
+              </StatusBadge>
             </div>
           </div>
-          <div className="rounded-[1.75rem] bg-[var(--color-surface-container-lowest)] p-4">
+          <div className="rounded-[var(--radius-large)] border border-border bg-muted/35 p-4">
             <p className="text-sm font-semibold">{t('realtimeChannel')}</p>
             <div className="mt-3">
-              <StatusPill tone={hasAppwrite ? 'success' : 'neutral'}>
+              <StatusBadge tone={hasAppwrite ? 'success' : 'neutral'}>
                 {hasAppwrite ? t('readyToSubscribe') : t('standby')}
-              </StatusPill>
+              </StatusBadge>
             </div>
           </div>
         </div>
-        <div>
-          <Button variant="ghost" onClick={logout} disabled={logoutPending}>
+        <div className="mt-5">
+          <Button variant="secondary" onClick={logout} loading={logoutPending}>
             {logoutPending ? t('signingOut') : t('signOut')}
           </Button>
         </div>
-      </Panel>
-    </div>
+      </DataCard>
+    </PageTransition>
   );
 }

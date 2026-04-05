@@ -1,10 +1,33 @@
 'use client';
 
+import {PackagePlus} from 'lucide-react';
 import {useLocale, useTranslations} from 'next-intl';
 import {useDeferredValue, useId, useMemo, useState, useTransition} from 'react';
 
 import {saveProductAction} from '@/app/actions/products';
-import {Button, Input, LabelBlock, Modal, Panel, SectionHeader, StatusPill} from '@/components/shared/ui';
+import {
+  Button,
+  DataCard,
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  EmptyState,
+  FieldGroup,
+  Input,
+  PageHeader,
+  PageTransition,
+  SearchField,
+  SegmentedControl,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+  StatusBadge,
+} from '@/components/ui';
 import {formatCurrency} from '@/lib/format';
 
 type ProductItem = {
@@ -56,7 +79,7 @@ export function ProductsPage({initialProducts, initialCategories}: ProductsPageP
   const stockId = useId();
 
   const filtered = useMemo(
-    () => items.filter((item) => `${item.name} ${item.categoryName}`.toLowerCase().includes(deferredQuery.toLowerCase())),
+    () => items.filter((item) => `${item.name} ${item.categoryName} ${item.sku}`.toLowerCase().includes(deferredQuery.toLowerCase())),
     [deferredQuery, items],
   );
 
@@ -105,111 +128,140 @@ export function ProductsPage({initialProducts, initialCategories}: ProductsPageP
   }
 
   return (
-    <div className="space-y-6">
-      <SectionHeader title={t('title')} action={<Button onClick={openCreate}>{t('new')}</Button>} />
+    <PageTransition className="space-y-6">
+      <PageHeader
+        eyebrow="Catalog"
+        title={t('title')}
+        action={
+          <Button onClick={openCreate}>
+            <PackagePlus className="size-4" />
+            {t('new')}
+          </Button>
+        }
+      />
 
-      <Panel className="space-y-4">
-        <div className="space-y-2">
-          <label htmlFor={searchId} className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-muted)]">
-            {common('search')}
-          </label>
-          <Input id={searchId} aria-label={common('search')} placeholder={common('search')} value={query} onChange={(event) => setQuery(event.target.value)} />
-        </div>
-        <div className="grid gap-3 lg:grid-cols-2">
-          {filtered.map((product) => (
-            <button
-              key={product.id}
-              type="button"
-              onClick={() => openEdit(product)}
-              className="flex cursor-pointer items-center justify-between gap-4 rounded-[1.75rem] bg-[var(--color-surface-container-low)] p-4 text-left transition duration-200 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgb(0_109_67/18%)]"
-            >
-              <div className="space-y-2">
-                <div className="flex flex-wrap items-center gap-2">
-                  <p className="font-semibold">{product.name}</p>
-                  <StatusPill tone={product.isActive ? 'success' : 'neutral'}>
-                    {product.isActive ? common('active') : common('inactive')}
-                  </StatusPill>
-                </div>
-                <p className="text-xs uppercase tracking-[0.18em] text-[var(--color-muted)]">{product.categoryName}</p>
-              </div>
-              <div className="text-right">
-                <p className="font-semibold">{formatCurrency(product.price, locale)}</p>
-                <p className="mt-2 text-sm text-[var(--color-muted)]">{product.stockQty} {t('stockCount')}</p>
-              </div>
-            </button>
-          ))}
-        </div>
-      </Panel>
+      <DataCard>
+        <div className="space-y-4">
+          <SearchField
+            id={searchId}
+            label={common('search')}
+            value={query}
+            placeholder={common('search')}
+            onChange={setQuery}
+          />
 
-      <Modal
-        open={open}
-        onClose={() => setOpen(false)}
-        title={draft.name || t('new')}
-        closeLabel={common('closeDialog')}
-        closeOnBackdropClick={false}
-      >
-        <div className="grid gap-4">
-          <LabelBlock
-            label={t('name')}
-            htmlFor={nameId}
-            value={<Input id={nameId} value={draft.name} onChange={(event) => setDraft({...draft, name: event.target.value})} />}
-          />
-          <LabelBlock
-            label={t('category')}
-            htmlFor={categoryId}
-            value={
-              <select
-                id={categoryId}
-                className="min-h-14 w-full rounded-[1.25rem] bg-[var(--color-surface-container-highest)] px-4 outline-none focus-visible:ring-2 focus-visible:ring-[rgb(0_109_67/18%)]"
-                value={draft.categoryId ?? ''}
-                onChange={(event) => setDraft({...draft, categoryId: event.target.value || null})}
-              >
-                {categories.map((item) => (
-                  <option key={item.id} value={item.id}>
-                    {item.name}
-                  </option>
-                ))}
-              </select>
-            }
-          />
-          <div className="grid gap-4 md:grid-cols-2">
-            <LabelBlock
-              label={t('price')}
-              htmlFor={priceId}
-              value={
+          {filtered.length === 0 ? (
+            <EmptyState title={t('title')} description={t('empty')} className="min-h-52" />
+          ) : (
+            <div className="grid gap-3 lg:grid-cols-2 xl:grid-cols-3">
+              {filtered.map((product) => (
+                <button
+                  key={product.id}
+                  type="button"
+                  onClick={() => openEdit(product)}
+                  className="rounded-[var(--radius-large)] border border-border bg-card p-4 text-left shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/60 focus-visible:ring-offset-2 hover:border-primary/25 hover:bg-primary/5"
+                >
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="space-y-2">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <p className="font-semibold">{product.name}</p>
+                        <StatusBadge tone={product.isActive ? 'success' : 'neutral'}>
+                          {product.isActive ? common('active') : common('inactive')}
+                        </StatusBadge>
+                      </div>
+                      <p className="text-sm text-muted-foreground">{product.categoryName}</p>
+                    </div>
+                    <div className="text-right">
+                      <p className="font-mono text-lg font-semibold">
+                        {formatCurrency(product.price, locale)}
+                      </p>
+                      <p className="mt-1 text-sm text-muted-foreground">
+                        {product.stockQty} {t('stockCount')}
+                      </p>
+                    </div>
+                  </div>
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+      </DataCard>
+
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogContent className="p-0">
+          <DialogHeader>
+            <DialogTitle>{draft.name || t('new')}</DialogTitle>
+            <DialogDescription>{t('category')}</DialogDescription>
+          </DialogHeader>
+
+          <div className="grid gap-4 px-6 pb-6">
+            <FieldGroup label={t('name')} htmlFor={nameId}>
+              <Input id={nameId} value={draft.name} onChange={(event) => setDraft({...draft, name: event.target.value})} />
+            </FieldGroup>
+
+            <FieldGroup label={t('category')} htmlFor={categoryId}>
+              <Select value={draft.categoryId ?? ''} onValueChange={(value) => setDraft({...draft, categoryId: value || null})}>
+                <SelectTrigger id={categoryId}>
+                  <SelectValue placeholder={t('category')} />
+                </SelectTrigger>
+                <SelectContent>
+                  {categories.map((item) => (
+                    <SelectItem key={item.id} value={item.id}>
+                      {item.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </FieldGroup>
+
+            <div className="grid gap-4 md:grid-cols-2">
+              <FieldGroup label={t('price')} htmlFor={priceId}>
                 <Input
                   id={priceId}
                   inputMode="numeric"
                   value={String(draft.price)}
                   onChange={(event) => setDraft({...draft, price: Number(event.target.value || 0)})}
                 />
-              }
-            />
-            <LabelBlock
-              label={t('stock')}
-              htmlFor={stockId}
-              value={
+              </FieldGroup>
+              <FieldGroup label={t('stock')} htmlFor={stockId}>
                 <Input
                   id={stockId}
                   inputMode="numeric"
                   value={String(draft.stockQty)}
                   onChange={(event) => setDraft({...draft, stockQty: Number(event.target.value || 0)})}
                 />
-              }
-            />
+              </FieldGroup>
+            </div>
+
+            <div className="space-y-2">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
+                {common('status')}
+              </p>
+              <SegmentedControl
+                value={draft.isActive ? 'active' : 'inactive'}
+                onChange={(value) => setDraft({...draft, isActive: value === 'active'})}
+                ariaLabel={common('status')}
+                options={[
+                  {label: common('active'), value: 'active'},
+                  {label: common('inactive'), value: 'inactive'},
+                ]}
+              />
+            </div>
+
+            {message ? <p role="alert" aria-live="polite" className="text-sm text-destructive">{message}</p> : null}
           </div>
-          {message ? <p role="alert" aria-live="polite" className="text-sm text-[var(--color-error)]">{message}</p> : null}
-          <div className="flex justify-end gap-3">
+
+          <DialogFooter>
             <Button variant="ghost" onClick={() => setOpen(false)}>
               {common('cancel')}
             </Button>
-            <Button onClick={saveDraft} disabled={isPending}>
+            <Button onClick={saveDraft} loading={isPending}>
               {common('save')}
             </Button>
-          </div>
-        </div>
-      </Modal>
-    </div>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </PageTransition>
   );
 }
 
