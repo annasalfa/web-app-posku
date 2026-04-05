@@ -13,6 +13,12 @@
     "ownerMode": "Operator tunggal",
     "search": "Cari",
     "total": "Total",
+    "payment": "Pembayaran",
+    "date": "Tanggal",
+    "notes": "Catatan",
+    "paid": "Dibayar",
+    "change": "Kembalian",
+    "status": "Status",
     "save": "Simpan",
     "cancel": "Batal",
     "remove": "Hapus",
@@ -124,7 +130,8 @@
     "stock": "Stok awal",
     "price": "Harga",
     "category": "Kategori",
-    "stockCount": "stok"
+    "stockCount": "stok",
+    "empty": "Tidak ada produk yang cocok."
   },
   "stock": {
     "title": "Stok",

@@ -13,6 +13,12 @@
     "ownerMode": "Solo operator",
     "search": "Search",
     "total": "Total",
+    "payment": "Payment",
+    "date": "Date",
+    "notes": "Notes",
+    "paid": "Paid",
+    "change": "Change",
+    "status": "Status",
     "save": "Save",
     "cancel": "Cancel",
     "remove": "Remove",
@@ -124,7 +130,8 @@
     "stock": "Opening stock",
     "price": "Price",
     "category": "Category",
-    "stockCount": "stock"
+    "stockCount": "stock",
+    "empty": "No matching products found."
   },
   "stock": {
     "title": "Stock",
