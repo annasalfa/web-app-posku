@@ -1,10 +1,14 @@
 'use client';
 
-import {Menu, WifiOff, X} from 'lucide-react';
+import {Menu, WifiOff} from 'lucide-react';
 import {useLocale, useTranslations} from 'next-intl';
 import {usePathname} from 'next/navigation';
-import {useEffect, useMemo, useRef, useState} from 'react';
+import type {ReactNode} from 'react';
+import {useMemo, useState} from 'react';
 
+import {Button} from '@/components/ui/button';
+import {Sheet, SheetContent, SheetHeader, SheetTitle} from '@/components/ui/sheet';
+import {StatusBadge} from '@/components/ui/pos';
 import {Link} from '@/i18n/navigation';
 import {NAV_ITEMS} from '@/lib/constants/navigation';
 import {cn} from '@/lib/utils/cn';
@@ -14,7 +18,7 @@ export function AppFrame({
   children,
   authenticated,
 }: {
-  children: React.ReactNode;
+  children: ReactNode;
   authenticated: boolean;
 }) {
   const locale = useLocale();
@@ -23,228 +27,177 @@ export function AppFrame({
   const pathname = usePathname();
   const isOnline = useOnlineStatus();
   const [navOpen, setNavOpen] = useState(false);
-  const drawerRef = useRef<HTMLElement | null>(null);
-  const menuButtonRef = useRef<HTMLButtonElement | null>(null);
-  const lastFocusedElementRef = useRef<HTMLElement | null>(null);
-  const wasNavOpenRef = useRef(false);
 
   const isLoginRoute = useMemo(() => pathname?.endsWith('/login') ?? false, [pathname]);
 
-  useEffect(() => {
-    const previousOverflow = document.body.style.overflow;
-
-    if (navOpen) {
-      document.body.style.overflow = 'hidden';
-      lastFocusedElementRef.current = document.activeElement as HTMLElement | null;
-
-      window.requestAnimationFrame(() => {
-        const focusables = getFocusableElements(drawerRef.current);
-        (focusables[0] ?? drawerRef.current)?.focus();
-      });
-
-      const handleKeyDown = (event: KeyboardEvent) => {
-        if (event.key === 'Escape') {
-          setNavOpen(false);
-          return;
-        }
-
-        if (event.key !== 'Tab') {
-          return;
-        }
-
-        const focusables = getFocusableElements(drawerRef.current);
-
-        if (focusables.length === 0) {
-          return;
-        }
-
-        const first = focusables[0];
-        const last = focusables[focusables.length - 1];
-        const active = document.activeElement;
-
-        if (event.shiftKey && active === first) {
-          event.preventDefault();
-          last.focus();
-        }
-
-        if (!event.shiftKey && active === last) {
-          event.preventDefault();
-          first.focus();
-        }
-      };
-
-      window.addEventListener('keydown', handleKeyDown);
-
-      return () => {
-        document.body.style.overflow = previousOverflow;
-        window.removeEventListener('keydown', handleKeyDown);
-      };
-    }
-
-    document.body.style.overflow = previousOverflow;
-
-    if (wasNavOpenRef.current) {
-      (lastFocusedElementRef.current ?? menuButtonRef.current)?.focus();
-    }
-
-    return () => {
-      document.body.style.overflow = previousOverflow;
-    };
-  }, [navOpen]);
-
-  useEffect(() => {
-    wasNavOpenRef.current = navOpen;
-  }, [navOpen]);
+  const currentNav = NAV_ITEMS.find(
+    (item) => pathname === `/${locale}${item.href}` || (item.href === '/' && pathname === `/${locale}`),
+  );
 
   if (isLoginRoute) {
     return <>{children}</>;
   }
 
   return (
-    <div className="min-h-dvh px-4 py-4 md:px-6 md:py-6">
+    <div className="shell-highlight min-h-dvh bg-background">
       <a href="#main-content" className="skip-link">
         {shell('skipToContent')}
       </a>
 
-      {!isOnline ? (
-        <div className="mb-4 flex min-h-14 items-center gap-3 rounded-[1.5rem] bg-[rgb(186_26_26/10%)] px-4 text-sm text-[var(--color-error)]">
-          <WifiOff className="h-5 w-5" />
-          <span>{t('common.offline')}</span>
-        </div>
-      ) : null}
-
-      {navOpen ? (
-        <>
-          <button
-            type="button"
-            aria-label={shell('closeNavigation')}
-            className="fixed inset-0 z-40 bg-[rgb(28_27_27/28%)] md:hidden"
-            onClick={() => setNavOpen(false)}
-          />
-          <aside
-            ref={drawerRef}
-            tabIndex={-1}
-            className="paper-panel fixed inset-y-4 left-4 z-50 flex w-[min(20rem,calc(100vw-2rem))] flex-col rounded-[2rem] p-5 md:hidden"
-          >
-            <div className="flex items-start justify-between gap-3">
-              <BrandBlock />
-              <button
-                type="button"
-                aria-label={shell('closeNavigation')}
-                className="flex h-12 w-12 items-center justify-center rounded-full bg-[var(--color-surface-container-low)]"
-                onClick={() => setNavOpen(false)}
-              >
-                <X className="h-5 w-5" />
-              </button>
-            </div>
-            <nav className="mt-8 space-y-2">
-              {NAV_ITEMS.map((item) => {
-                const active = pathname === `/${locale}${item.href}` || (item.href === '/' && pathname === `/${locale}`);
-
-                return (
-                  <Link
-                    key={item.href}
-                    href={item.href}
-                    aria-current={active ? 'page' : undefined}
-                    className={cn(
-                      'flex min-h-14 items-center gap-3 rounded-[1.5rem] px-4 text-sm font-semibold transition',
-                      active
-                        ? 'bg-[var(--color-surface-container-high)] text-[var(--color-on-surface)]'
-                        : 'text-[var(--color-muted)] hover:bg-[var(--color-surface-container-low)]',
-                    )}
-                    onClick={() => setNavOpen(false)}
-                  >
-                    <item.icon className="h-5 w-5" />
-                    {t(`nav.${item.labelKey}`)}
-                  </Link>
-                );
-              })}
-            </nav>
-          </aside>
-        </>
-      ) : null}
-
-      <div className="md:grid md:grid-cols-[5.5rem_minmax(0,1fr)] md:gap-4 xl:grid-cols-[272px_minmax(0,1fr)]">
-        <aside className="paper-panel fixed inset-y-6 left-6 z-30 hidden w-[5.5rem] flex-col rounded-[2rem] p-4 md:flex xl:w-[272px] xl:p-5">
-          <div className="flex justify-center xl:hidden">
-            <div className="flex h-14 w-14 items-center justify-center rounded-[1.5rem] bg-[var(--color-surface-container-low)]">
-              <span className="font-display text-2xl font-semibold tracking-[-0.08em]">{shell('brandTitle').charAt(0)}</span>
-            </div>
-          </div>
-          <div className="hidden xl:block">
-            <BrandBlock />
-          </div>
-          <nav className="mt-8 space-y-2">
-            {NAV_ITEMS.map((item) => {
-              const active = pathname === `/${locale}${item.href}` || (item.href === '/' && pathname === `/${locale}`);
-
-              return (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  aria-current={active ? 'page' : undefined}
-                  aria-label={t(`nav.${item.labelKey}`)}
-                  className={cn(
-                    'flex min-h-14 items-center justify-center rounded-[1.5rem] px-0 text-sm font-semibold transition xl:justify-start xl:gap-3 xl:px-4',
-                    active
-                      ? 'bg-[var(--color-surface-container-high)] text-[var(--color-on-surface)]'
-                      : 'text-[var(--color-muted)] hover:bg-[var(--color-surface-container-low)]',
-                  )}
-                >
-                  <item.icon className="h-5 w-5" />
-                  <span className="hidden xl:inline">{t(`nav.${item.labelKey}`)}</span>
-                </Link>
-              );
-            })}
-          </nav>
+      <div className="mx-auto flex min-h-dvh w-full max-w-[1600px] gap-4 px-3 py-3 md:px-4 md:py-4 xl:gap-5 xl:px-5">
+        <aside className="hidden md:flex md:w-[14rem] xl:w-[18rem]">
+          <DesktopRail locale={locale} pathname={pathname ?? ''} />
         </aside>
 
-        <div className="hidden md:block" />
-
-        <main id="main-content" className="min-w-0 scroll-mt-24 focus:outline-none" tabIndex={-1}>
-          <header className="glass-panel mb-4 flex min-h-20 items-center justify-between rounded-[2rem] px-4 py-3 md:px-5">
-            <p className="font-display text-2xl font-semibold tracking-[-0.05em] md:text-3xl">{t('common.appName')}</p>
+        <div className="min-w-0 flex-1">
+          <header className="sticky top-0 z-30 mb-4 rounded-[calc(var(--radius-card)+4px)] border border-border/80 bg-card/92 px-4 py-3 shadow-sm backdrop-blur md:px-5">
             <div className="flex items-center gap-3">
-              <span className="hidden rounded-full bg-[var(--color-surface-container-lowest)] px-3 py-2 text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-muted)] md:inline-flex">
-                {isOnline ? t('common.onlineStatus') : t('common.offlineStatus')}
-              </span>
-              <button
-                ref={menuButtonRef}
-                type="button"
+              <Button
+                variant="secondary"
+                size="icon"
+                className="md:hidden"
                 aria-label={shell('openNavigation')}
-                className="inline-flex h-12 w-12 items-center justify-center rounded-full bg-[var(--color-surface-container-lowest)] md:hidden"
-                onClick={() => setNavOpen((current) => !current)}
+                onClick={() => setNavOpen(true)}
               >
-                <Menu className="h-5 w-5" />
-              </button>
+                <Menu className="size-5" />
+              </Button>
+
+              <div className="min-w-0 flex-1">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+                  {t('common.appName')}
+                </p>
+                <div className="flex flex-wrap items-center gap-2">
+                  <p className="truncate text-xl font-bold tracking-[-0.03em] md:text-2xl">
+                    {currentNav ? t(`nav.${currentNav.labelKey}`) : t('common.appName')}
+                  </p>
+                  <span className="hidden text-sm text-muted-foreground md:inline">
+                    {t('common.ownerMode')}
+                  </span>
+                </div>
+              </div>
+
+              {authenticated ? (
+                <div className="hidden items-center gap-2 md:flex">
+                  <StatusBadge tone={isOnline ? 'success' : 'danger'}>
+                    {isOnline ? t('common.onlineStatus') : t('common.offlineStatus')}
+                  </StatusBadge>
+                </div>
+              ) : null}
             </div>
+
+            {!isOnline && authenticated ? (
+              <div className="mt-3 flex items-start gap-3 rounded-[var(--radius-large)] border border-destructive/15 bg-destructive/8 px-4 py-3 text-sm text-destructive">
+                <WifiOff className="mt-0.5 size-4 shrink-0" />
+                <span>{t('common.offline')}</span>
+              </div>
+            ) : null}
           </header>
 
-          {children}
-        </main>
+          <main id="main-content" className="min-w-0 pb-4 focus:outline-none" tabIndex={-1}>
+            {children}
+          </main>
+        </div>
       </div>
+
+      <Sheet open={navOpen} onOpenChange={setNavOpen}>
+        <SheetContent side="left" className="w-[min(22rem,92vw)] bg-sidebar p-0 text-sidebar-foreground">
+          <SheetHeader className="border-b border-sidebar-border px-6 py-5 text-left">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+              {t('common.appName')}
+            </p>
+            <SheetTitle className="text-2xl font-bold tracking-[-0.04em]">
+              {shell('brandTitle')}
+            </SheetTitle>
+          </SheetHeader>
+          <div className="px-4 py-4">
+            <MobileRail locale={locale} pathname={pathname ?? ''} onNavigate={() => setNavOpen(false)} />
+          </div>
+        </SheetContent>
+      </Sheet>
     </div>
   );
 }
 
-function BrandBlock({compact = false}: {compact?: boolean}) {
-  const t = useTranslations('shell');
+function DesktopRail({locale, pathname}: {locale: string; pathname: string}) {
+  const t = useTranslations();
+  const shell = useTranslations('shell');
 
   return (
-    <div className={cn(compact ? 'space-y-1' : 'space-y-0')}>
-      <h1 className="font-display text-4xl font-semibold tracking-[-0.08em]">{t('brandTitle')}</h1>
+    <div className="surface-grid sticky top-4 flex h-[calc(100dvh-2rem)] w-full flex-col rounded-[calc(var(--radius-card)+8px)] border border-sidebar-border bg-sidebar px-3 py-4 shadow-sm xl:px-4 xl:py-5">
+      <div className="mb-8 rounded-[var(--radius-card)] border border-sidebar-border/80 bg-background/70 px-3 py-4 xl:px-4">
+        <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+          {t('common.appName')}
+        </p>
+        <div className="mt-2">
+          <h1 className="text-[1.45rem] font-bold tracking-[-0.05em] xl:text-[1.8rem]">
+            {shell('brandTitle')}
+          </h1>
+          <p className="mt-1 text-sm leading-6 text-muted-foreground">
+            {t('common.ownerMode')}
+          </p>
+        </div>
+      </div>
+
+      <nav className="flex flex-1 flex-col gap-2">
+        {NAV_ITEMS.map((item) => {
+          const active = pathname === `/${locale}${item.href}` || (item.href === '/' && pathname === `/${locale}`);
+
+          return (
+            <Link
+              key={item.href}
+              href={item.href}
+              aria-current={active ? 'page' : undefined}
+              className={cn(
+                'group flex min-h-14 items-center gap-3 rounded-[var(--radius-large)] border px-4 text-sm font-semibold transition-colors',
+                active
+                  ? 'border-primary/20 bg-sidebar-accent text-sidebar-accent-foreground'
+                  : 'border-transparent text-muted-foreground hover:border-sidebar-border hover:bg-muted/60 hover:text-foreground',
+              )}
+            >
+              <item.icon className="size-5 shrink-0" />
+              <span className="truncate">{t(`nav.${item.labelKey}`)}</span>
+            </Link>
+          );
+        })}
+      </nav>
     </div>
   );
 }
 
-function getFocusableElements(container: HTMLElement | null) {
-  if (!container) {
-    return [];
-  }
+function MobileRail({
+  locale,
+  pathname,
+  onNavigate,
+}: {
+  locale: string;
+  pathname: string;
+  onNavigate: () => void;
+}) {
+  const t = useTranslations();
 
-  return Array.from(
-    container.querySelectorAll<HTMLElement>(
-      'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])',
-    ),
+  return (
+    <nav className="space-y-2">
+      {NAV_ITEMS.map((item) => {
+        const active = pathname === `/${locale}${item.href}` || (item.href === '/' && pathname === `/${locale}`);
+
+        return (
+          <Link
+            key={item.href}
+            href={item.href}
+            onClick={onNavigate}
+            aria-current={active ? 'page' : undefined}
+            className={cn(
+              'flex min-h-14 items-center gap-3 rounded-[var(--radius-large)] border px-4 text-sm font-semibold transition-colors',
+              active
+                ? 'border-primary/20 bg-sidebar-accent text-sidebar-accent-foreground'
+                : 'border-transparent text-muted-foreground hover:bg-muted/60 hover:text-foreground',
+            )}
+          >
+            <item.icon className="size-5 shrink-0" />
+            <span>{t(`nav.${item.labelKey}`)}</span>
+          </Link>
+        );
+      })}
+    </nav>
   );
 }

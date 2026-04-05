@@ -1,8 +1,9 @@
 import type {Metadata} from 'next';
 import {hasLocale, NextIntlClientProvider} from 'next-intl';
 import {getMessages, setRequestLocale} from 'next-intl/server';
-import {Inter, Manrope} from 'next/font/google';
+import {Inter} from 'next/font/google';
 import {notFound} from 'next/navigation';
+import type {ReactNode} from 'react';
 
 import '../globals.css';
 
@@ -14,11 +15,6 @@ import {getCurrentUser} from '@/lib/server/auth';
 const inter = Inter({
   subsets: ['latin'],
   variable: '--font-inter',
-});
-
-const manrope = Manrope({
-  subsets: ['latin'],
-  variable: '--font-manrope',
 });
 
 export const metadata: Metadata = {
@@ -36,7 +32,7 @@ export default async function LocaleLayout({
   children,
   params,
 }: {
-  children: React.ReactNode;
+  children: ReactNode;
   params: Promise<{locale: string}>;
 }) {
   const {locale} = await params;
@@ -52,7 +48,7 @@ export default async function LocaleLayout({
 
   return (
     <html lang={locale} suppressHydrationWarning>
-      <body className={`${inter.variable} ${manrope.variable}`}>
+      <body className={inter.variable}>
         <NextIntlClientProvider messages={messages}>
           <Providers>
             <AppFrame authenticated={Boolean(currentUser)}>{children}</AppFrame>
