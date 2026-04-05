@@ -93,6 +93,7 @@ http://localhost:3000/id/login
 ## Scripts
 
 ```bash
+npm test
 npm run dev
 npm run build
 npm run start
@@ -124,6 +125,17 @@ npx tsc --noEmit
 npm run build
 ```
 
+### Smoke test
+
+Menjalankan smoke test publik yang tidak membutuhkan kredensial login:
+
+```bash
+npm test
+```
+
+Catatan:
+- `npm test -- --coverage` tetap jalan, tetapi flag coverage diabaikan karena coverage browser belum dikonfigurasi untuk Playwright di repo ini.
+
 ### End-to-end tests
 
 Playwright membutuhkan kredensial akun uji:
@@ -131,7 +143,7 @@ Playwright membutuhkan kredensial akun uji:
 ```bash
 USER_EMAIL='your-test-email'
 USER_PASS='your-test-password'
-npx playwright test
+npm run e2e
 ```
 
 Coverage E2E saat ini mencakup:

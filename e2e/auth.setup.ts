@@ -23,6 +23,6 @@ setup('authenticate', async ({page}) => {
   await page.getByRole('button', {name: 'Masuk'}).click();
 
   await page.waitForURL('/id');
-  await expect(page.getByRole('heading', {name: 'Dashboard'})).toBeVisible();
+  await expect(page.locator('#main-content').getByRole('heading', {name: 'Dashboard'})).toBeVisible();
   await page.context().storageState({path: authFile});
 });

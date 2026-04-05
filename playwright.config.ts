@@ -21,8 +21,17 @@ export default defineConfig({
       testMatch: /auth\.setup\.ts/,
     },
     {
-      name: 'chromium',
+      name: 'public',
+      testMatch: /auth-redirect\.spec\.ts/,
+      use: {
+        ...devices['Desktop Chrome'],
+      },
+    },
+    {
+      name: 'authenticated',
       dependencies: ['setup'],
+      testMatch: /.*\.spec\.ts/,
+      testIgnore: /auth-redirect\.spec\.ts/,
       use: {
         ...devices['Desktop Chrome'],
         storageState: authFile,

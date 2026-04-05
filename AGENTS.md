@@ -18,11 +18,14 @@ npm run dev                    # Start development server
 npm run build                  # Production build
 npm run start                  # Start production server
 npm run lint                   # Run ESLint (Next.js core-web-vitals)
+npx tsc --noEmit               # Typecheck
+npm test                       # Public smoke test (no auth required)
+npm run e2e                    # Full Playwright suite (requires env + test account)
 npm run appwrite:provision-db # Provision database collections
 npm run appwrite:seed-db      # Seed initial data
 
-# Single test (no test framework configured yet)
-npm test -- --testPathPattern="filename"
+# Single Playwright spec
+npm run e2e -- e2e/auth-redirect.spec.ts
 ```
 
 ---
@@ -103,14 +106,23 @@ src/
 ## Notes for Agents
 
 - Run `npm run lint` before committing
+- Run `npx tsc --noEmit` for TypeScript verification
+- Run `npm test` for the public smoke path
+- Run `npm run e2e` only when Appwrite env vars, seeded data, and `USER_EMAIL` / `USER_PASS` are available locally
 - Keep server/client code separate
 - Use TypeScript - no `any`
-- Test features with `npm run dev`
+- Use `.env.example` as the source of truth for required local env vars
+- Never commit `.env`, `opencode.json`, API keys, or test credentials
+- Test interactive UI changes with `npm run dev`
 - Run `npm run appwrite:provision-db` after schema changes
 
 ---
 
 ## Test Account
 
-USER_EMAIL = "annasalfarisi@gmail.com"
-USER_PASS = "Pelerkud@ku123"
+Set locally and do not commit:
+
+```bash
+USER_EMAIL="<set-in-local-env>"
+USER_PASS="<set-in-local-env>"
+```

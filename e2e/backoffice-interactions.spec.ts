@@ -29,7 +29,8 @@ test.describe.serial('backoffice interactions', () => {
 
     await expect(page.getByRole('dialog', {name: 'Produk baru'})).toBeVisible();
     await page.getByLabel('Nama').fill(productName);
-    await page.getByLabel('Kategori').selectOption(firstCategory!.$id);
+    await page.getByRole('combobox', {name: 'Kategori'}).click();
+    await page.getByRole('option', {name: firstCategory!.name}).click();
     await page.getByLabel('Harga').fill('12345');
     await page.getByLabel('Stok awal').fill('6');
     await page.getByRole('button', {name: 'Simpan'}).click();
@@ -77,10 +78,10 @@ test.describe.serial('backoffice interactions', () => {
     await expect(page.getByRole('button', {name: new RegExp(`Hapus ${updatedProductName}`)})).toBeVisible();
     await expect(page.getByRole('button', {name: 'Selesaikan transaksi'})).toBeDisabled();
 
-    await page.getByRole('group', {name: 'Metode bayar'}).getByRole('button', {name: 'Transfer bank'}).click();
+    await page.getByRole('group', {name: 'Metode bayar'}).getByText('Transfer bank').click();
     await expect(page.getByRole('button', {name: 'Selesaikan transaksi'})).toBeEnabled();
 
-    await page.getByRole('group', {name: 'Metode bayar'}).getByRole('button', {name: 'Tunai'}).click();
+    await page.getByRole('group', {name: 'Metode bayar'}).getByText('Tunai').click();
     await page.getByRole('button', {name: new RegExp(`Tambah jumlah untuk ${updatedProductName}`)}).click();
     await page.getByRole('button', {name: new RegExp(`Kurangi jumlah untuk ${updatedProductName}`)}).click();
     await page.getByLabel('Nominal diterima').fill('13000');
@@ -94,7 +95,7 @@ test.describe.serial('backoffice interactions', () => {
   test('filters and inspects history for the submitted checkout', async ({page}) => {
     await page.goto('/id/history');
 
-    await page.getByRole('group', {name: 'Filter pembayaran'}).getByRole('button', {name: 'Tunai'}).click();
+    await page.getByRole('group', {name: 'Filter pembayaran'}).getByText('Tunai').click();
     await expect(page.getByRole('heading', {name: /trx_/i}).or(page.getByRole('heading', {name: /[a-z0-9]{10,}/i}))).toBeVisible();
     await expect(page.getByText(updatedProductName).last()).toBeVisible();
 
@@ -108,7 +109,7 @@ test.describe.serial('backoffice interactions', () => {
   test('switches report periods and downloads CSV', async ({page}) => {
     await page.goto('/id/reports');
 
-    await page.getByRole('group', {name: 'Filter periode'}).getByRole('button', {name: 'Kustom'}).click();
+    await page.getByRole('group', {name: 'Filter periode'}).getByText('Kustom').click();
     await expect(page.getByLabel('Dari')).toBeVisible();
     await expect(page.getByLabel('Sampai')).toBeVisible();
 
@@ -125,15 +126,15 @@ test.describe.serial('backoffice interactions', () => {
   test('switches theme and locale from settings', async ({page}) => {
     await page.goto('/id/settings');
 
-    await page.getByRole('button', {name: 'Gelap'}).click();
+    await page.getByRole('group', {name: 'Tema'}).getByText('Gelap').click();
     await expect(page.locator('html')).toHaveClass(/dark/);
 
-    await page.getByRole('button', {name: 'English'}).click();
+    await page.getByRole('group', {name: 'Bahasa'}).getByText('English').click();
     await expect(page).toHaveURL(/\/en\/settings$/);
-    await expect(page.getByRole('heading', {name: 'Settings'})).toBeVisible();
+    await expect(page.locator('#main-content').getByRole('heading', {name: 'Settings'})).toBeVisible();
 
-    await page.getByRole('button', {name: 'Bahasa Indonesia'}).click();
+    await page.getByRole('group', {name: 'Language'}).getByText('Bahasa Indonesia').click();
     await expect(page).toHaveURL(/\/id\/settings$/);
-    await expect(page.getByRole('heading', {name: 'Pengaturan'})).toBeVisible();
+    await expect(page.locator('#main-content').getByRole('heading', {name: 'Pengaturan'})).toBeVisible();
   });
 });

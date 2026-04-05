@@ -87,7 +87,7 @@ test.describe.serial('ui edge cases', () => {
 
     await page.getByLabel('Cari').fill(checkoutName);
     await page.getByRole('button', {name: new RegExp(checkoutName)}).click();
-    await page.getByRole('group', {name: 'Metode bayar'}).getByRole('button', {name: 'QRIS'}).click();
+    await page.getByRole('group', {name: 'Metode bayar'}).getByText('QRIS').click();
 
     await expect(page.getByLabel('Nominal diterima')).toHaveCount(0);
     await expect(page.getByRole('button', {name: 'Selesaikan transaksi'})).toBeEnabled();
@@ -99,7 +99,7 @@ test.describe.serial('ui edge cases', () => {
 
   test('disables report exports when a custom range has no transactions', async ({page}) => {
     await page.goto('/id/reports');
-    await page.getByRole('group', {name: 'Filter periode'}).getByRole('button', {name: 'Kustom'}).click();
+    await page.getByRole('group', {name: 'Filter periode'}).getByText('Kustom').click();
     await page.getByLabel('Dari').fill('2099-01-01');
     await page.getByLabel('Sampai').fill('2099-01-31');
 
