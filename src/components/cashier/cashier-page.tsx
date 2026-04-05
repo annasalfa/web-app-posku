@@ -1,11 +1,24 @@
 'use client';
 
+import {AnimatePresence, LayoutGroup, motion, useReducedMotion} from 'motion/react';
 import {Minus, Plus, Trash2} from 'lucide-react';
 import {useLocale, useTranslations} from 'next-intl';
 import {useDeferredValue, useId, useMemo, useState, useTransition} from 'react';
 
 import {checkoutAction} from '@/app/actions/checkout';
-import {Button, EmptyState, GlassPanel, Input, Panel, SectionHeader, SegmentedControl, StatusPill} from '@/components/shared/ui';
+import {
+  Button,
+  DataCard,
+  EmptyState,
+  FieldGroup,
+  Input,
+  PageHeader,
+  PageTransition,
+  ScrollArea,
+  SearchField,
+  SegmentedControl,
+  StatusBadge,
+} from '@/components/ui';
 import {formatCurrency} from '@/lib/format';
 import {cn} from '@/lib/utils/cn';
 import {useOnlineStatus} from '@/lib/utils/use-online-status';
@@ -35,6 +48,7 @@ export function CashierPage({initialProducts, initialCategories}: CashierPagePro
   const common = useTranslations('common');
   const locale = useLocale() as 'id' | 'en';
   const isOnline = useOnlineStatus();
+  const reduceMotion = useReducedMotion();
   const [menuItems, setMenuItems] = useState(initialProducts);
   const [query, setQuery] = useState('');
   const [category, setCategory] = useState<string>('all');
@@ -51,7 +65,7 @@ export function CashierPage({initialProducts, initialCategories}: CashierPagePro
   const filteredProducts = useMemo(() => {
     return menuItems.filter((product) => {
       const matchesCategory = category === 'all' || product.categoryName === category;
-      const matchesQuery = product.name.toLowerCase().includes(deferredQuery.toLowerCase());
+      const matchesQuery = `${product.name} ${product.sku}`.toLowerCase().includes(deferredQuery.toLowerCase());
       return matchesCategory && matchesQuery && product.isActive;
     });
   }, [category, deferredQuery, menuItems]);
@@ -59,6 +73,7 @@ export function CashierPage({initialProducts, initialCategories}: CashierPagePro
   const total = cart.reduce((sum, item) => sum + item.quantity * item.unitPrice, 0);
   const amountReceived = Number(received || 0);
   const change = Math.max(amountReceived - total, 0);
+  const canSubmit = isOnline && cart.length > 0 && (paymentMethod !== 'cash' || amountReceived >= total);
 
   function addToCart(productId: string) {
     const product = menuItems.find((entry) => entry.id === productId);
@@ -97,7 +112,7 @@ export function CashierPage({initialProducts, initialCategories}: CashierPagePro
   }
 
   function handleSubmit() {
-    if (!isOnline || cart.length === 0) {
+    if (!canSubmit) {
       return;
     }
 
@@ -126,41 +141,44 @@ export function CashierPage({initialProducts, initialCategories}: CashierPagePro
     });
   }
 
-  function paymentLabel(method: PaymentMethod) {
-    return method === 'cash' ? t('cash') : method === 'transfer' ? t('transfer') : t('qris');
+  function paymentTone(method: PaymentMethod) {
+    return method === 'cash' ? 'cash' : method === 'transfer' ? 'transfer' : 'qris';
   }
 
   return (
-    <div className="safe-page-bottom space-y-6">
-      <SectionHeader title={t('title')} />
+    <PageTransition className="space-y-6">
+      <PageHeader
+        eyebrow="Checkout"
+        title={t('title')}
+      />
 
-      <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_22rem] xl:grid-cols-[minmax(0,1fr)_23rem]">
+      <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_26rem]">
         <div className="space-y-4">
-          <Panel className="space-y-4 bg-[var(--color-surface-container-low)]">
-            <div className="grid gap-3 md:grid-cols-[minmax(0,1fr)_auto]">
+          <DataCard className="surface-grid">
+            <div className="grid gap-3 xl:grid-cols-[minmax(0,1fr)_minmax(24rem,auto)]">
+              <SearchField
+                id={searchId}
+                label={common('search')}
+                value={query}
+                placeholder={common('search')}
+                onChange={setQuery}
+              />
               <div className="space-y-2">
-                <label htmlFor={searchId} className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-muted)]">
-                  {common('search')}
-                </label>
-                <Input
-                  id={searchId}
-                  aria-label={common('search')}
-                  placeholder={common('search')}
-                  value={query}
-                  onChange={(event) => setQuery(event.target.value)}
+                <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
+                  {t('categoryFilter')}
+                </p>
+                <SegmentedControl
+                  value={category}
+                  onChange={setCategory}
+                  ariaLabel={t('categoryFilter')}
+                  options={[{label: t('all'), value: 'all'}, ...initialCategories.map((item) => ({label: item, value: item}))]}
                 />
               </div>
             </div>
-            <SegmentedControl
-              ariaLabel={t('categoryFilter')}
-              options={[{label: t('all'), value: 'all'}, ...initialCategories.map((item) => ({label: item, value: item}))]}
-              value={category}
-              onChange={setCategory}
-            />
-          </Panel>
+          </DataCard>
 
           {filteredProducts.length === 0 ? (
-            <EmptyState title={t('noResultsTitle')} description={t('noResults')} />
+            <EmptyState title={t('noResultsTitle')} description={t('noResults')} className="min-h-72" />
           ) : (
             <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
               {filteredProducts.map((product) => {
@@ -175,26 +193,32 @@ export function CashierPage({initialProducts, initialCategories}: CashierPagePro
                     aria-disabled={isOutOfStock}
                     onClick={() => addToCart(product.id)}
                     className={cn(
-                      'paper-panel flex min-h-44 flex-col justify-between rounded-[2rem] p-5 text-left transition duration-200 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgb(0_109_67/18%)]',
+                      'group flex min-h-52 flex-col justify-between rounded-[var(--radius-large)] border p-4 text-left shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/60 focus-visible:ring-offset-2',
                       isOutOfStock
-                        ? 'cursor-not-allowed opacity-60'
-                        : 'cursor-pointer hover:-translate-y-0.5',
+                        ? 'cursor-not-allowed border-border bg-muted/35 opacity-70'
+                        : 'border-border bg-card hover:border-primary/30 hover:bg-primary/5',
                     )}
                   >
-                    <div className="space-y-3">
+                    <div className="space-y-4">
                       <div className="flex flex-wrap gap-2">
-                        <StatusPill tone="neutral">{product.categoryName}</StatusPill>
-                        {isOutOfStock ? <StatusPill tone="danger">{common('outOfStock')}</StatusPill> : null}
-                        {!isOutOfStock && isLow ? <StatusPill tone="warning">{product.stockQty} {t('stockUnit')}</StatusPill> : null}
+                        <StatusBadge tone="neutral">{product.categoryName}</StatusBadge>
+                        {isOutOfStock ? <StatusBadge tone="danger">{common('outOfStock')}</StatusBadge> : null}
+                        {!isOutOfStock && isLow ? <StatusBadge tone="warning">{product.stockQty} {t('stockUnit')}</StatusBadge> : null}
                       </div>
-                      <div>
-                        <p className="font-display text-2xl font-semibold tracking-[-0.05em] md:text-3xl">{product.name}</p>
-                        <p className="mt-2 text-xs uppercase tracking-[0.18em] text-[var(--color-muted)]">SKU {product.sku}</p>
+                      <div className="space-y-2">
+                        <p className="line-clamp-2 text-xl font-bold tracking-[-0.03em]">{product.name}</p>
+                        <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-muted-foreground">
+                          SKU {product.sku}
+                        </p>
                       </div>
                     </div>
                     <div className="flex items-end justify-between gap-3">
-                      <p className="text-lg font-semibold">{formatCurrency(product.price, locale)}</p>
-                      <p className="text-sm text-[var(--color-muted)]">{product.stockQty} {t('stockUnit')}</p>
+                      <p className="font-mono text-2xl font-bold tracking-[-0.03em]">
+                        {formatCurrency(product.price, locale)}
+                      </p>
+                      <p className="text-sm text-muted-foreground">
+                        {product.stockQty} {t('stockUnit')}
+                      </p>
                     </div>
                   </button>
                 );
@@ -203,103 +227,159 @@ export function CashierPage({initialProducts, initialCategories}: CashierPagePro
           )}
         </div>
 
-        <Panel className="space-y-5 lg:sticky lg:top-6 lg:h-fit">
-          <h2 className="font-display text-3xl font-semibold tracking-[-0.05em] md:text-4xl">{t('cart')}</h2>
+        <DataCard
+          title={t('cart')}
+          className="xl:sticky xl:top-24 xl:h-fit"
+        >
+          <div className="space-y-5">
+            <div className="rounded-[var(--radius-large)] border border-border bg-muted/35 px-4 py-3">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-muted-foreground">
+                {t('total')}
+              </p>
+              <p className="mt-2 font-mono text-[2rem] font-bold tracking-[-0.05em]">
+                {formatCurrency(total, locale)}
+              </p>
+            </div>
 
-          <div className="space-y-3">
-            {cart.length === 0 ? (
-              <EmptyState title={t('emptyTitle')} description={t('empty')} className="min-h-48 bg-[var(--color-surface-container-low)]" />
-            ) : (
-              cart.map((item) => (
-                <div key={item.productId} className="rounded-[1.5rem] bg-[var(--color-surface-container-low)] p-4">
-                  <div className="flex items-start justify-between gap-3">
-                    <div>
-                      <p className="font-semibold">{item.name}</p>
-                      <p className="mt-2 text-sm text-[var(--color-muted)]">{formatCurrency(item.unitPrice, locale)}</p>
-                    </div>
-                    <button
-                      type="button"
-                      aria-label={`${common('remove')} ${item.name}`}
-                      className="cursor-pointer rounded-full p-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgb(0_109_67/18%)]"
-                      onClick={() => updateQuantity(item.productId, -item.quantity)}
-                    >
-                      <Trash2 className="h-5 w-5 text-[var(--color-muted)]" />
-                    </button>
-                  </div>
-                  <div className="mt-4 flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <button
-                        type="button"
-                        aria-label={`${common('decreaseQuantity')} ${item.name}`}
-                        className="flex h-12 w-12 cursor-pointer items-center justify-center rounded-full bg-[var(--color-surface-container-lowest)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgb(0_109_67/18%)]"
-                        onClick={() => updateQuantity(item.productId, -1)}
-                      >
-                        <Minus className="h-4 w-4" />
-                      </button>
-                      <span className="min-w-10 text-center font-semibold">{item.quantity}</span>
-                      <button
-                        type="button"
-                        aria-label={`${common('increaseQuantity')} ${item.name}`}
-                        className="flex h-12 w-12 cursor-pointer items-center justify-center rounded-full bg-[var(--color-surface-container-lowest)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgb(0_109_67/18%)]"
-                        onClick={() => updateQuantity(item.productId, 1)}
-                      >
-                        <Plus className="h-4 w-4" />
-                      </button>
-                    </div>
-                    <p className="font-semibold">{formatCurrency(item.quantity * item.unitPrice, locale)}</p>
-                  </div>
-                </div>
-              ))
-            )}
-          </div>
+            <LayoutGroup>
+              <ScrollArea className="max-h-[24rem] pr-2">
+                {cart.length === 0 ? (
+                  <EmptyState title={t('emptyTitle')} description={t('empty')} className="min-h-56" />
+                ) : (
+                  <div className="space-y-3">
+                    <AnimatePresence initial={false}>
+                      {cart.map((item) => (
+                        <motion.div
+                          key={item.productId}
+                          layout={!reduceMotion}
+                          initial={reduceMotion ? {opacity: 0} : {opacity: 0, y: 6}}
+                          animate={{opacity: 1, y: 0}}
+                          exit={{opacity: 0, y: reduceMotion ? 0 : -6}}
+                          className="rounded-[var(--radius-large)] border border-border bg-card p-4"
+                        >
+                          <div className="flex items-start justify-between gap-3">
+                            <div className="min-w-0">
+                              <p className="line-clamp-2 font-semibold">{item.name}</p>
+                              <p className="mt-1 text-sm text-muted-foreground">
+                                {formatCurrency(item.unitPrice, locale)}
+                              </p>
+                            </div>
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="icon"
+                              aria-label={`${common('remove')} ${item.name}`}
+                              onClick={() => updateQuantity(item.productId, -item.quantity)}
+                            >
+                              <Trash2 className="size-4" />
+                            </Button>
+                          </div>
 
-          <div className="space-y-3 rounded-[1.75rem] bg-[var(--color-surface-container-low)] p-4">
-            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-muted)]">{t('payment')}</p>
-            <SegmentedControl
-              ariaLabel={t('payment')}
-              options={[
-                {label: t('cash'), value: 'cash'},
-                {label: t('transfer'), value: 'transfer'},
-                {label: t('qris'), value: 'qris'},
-              ]}
-              value={paymentMethod}
-              onChange={(value) => setPaymentMethod(value as PaymentMethod)}
-            />
-            {paymentMethod === 'cash' ? (
-              <div className="space-y-2">
-                <label htmlFor={receivedId} className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-muted)]">
-                  {t('received')}
-                </label>
-                <Input id={receivedId} inputMode="numeric" value={received} onChange={(event) => setReceived(event.target.value)} />
-                <p className="text-sm text-[var(--color-muted)]">
-                  {t('change')}: <span className="font-semibold text-[var(--color-on-surface)]">{formatCurrency(change, locale)}</span>
-                </p>
+                          <div className="mt-4 flex items-center justify-between gap-3">
+                            <div className="flex items-center gap-2">
+                              <Button
+                                type="button"
+                                variant="secondary"
+                                size="icon"
+                                aria-label={`${common('decreaseQuantity')} ${item.name}`}
+                                onClick={() => updateQuantity(item.productId, -1)}
+                              >
+                                <Minus className="size-4" />
+                              </Button>
+                              <span className="min-w-8 text-center font-mono text-lg font-semibold">
+                                {item.quantity}
+                              </span>
+                              <Button
+                                type="button"
+                                variant="secondary"
+                                size="icon"
+                                aria-label={`${common('increaseQuantity')} ${item.name}`}
+                                onClick={() => updateQuantity(item.productId, 1)}
+                              >
+                                <Plus className="size-4" />
+                              </Button>
+                            </div>
+                            <p className="font-mono text-lg font-semibold">
+                              {formatCurrency(item.quantity * item.unitPrice, locale)}
+                            </p>
+                          </div>
+                        </motion.div>
+                      ))}
+                    </AnimatePresence>
+                  </div>
+                )}
+              </ScrollArea>
+            </LayoutGroup>
+
+            <div className="space-y-4 rounded-[var(--radius-large)] border border-border bg-muted/35 p-4">
+              <div className="flex items-center justify-between gap-3">
+                <p className="text-sm font-semibold">{t('payment')}</p>
+                <StatusBadge tone={paymentTone(paymentMethod)}>
+                  {paymentMethod === 'cash' ? t('cash') : paymentMethod === 'transfer' ? t('transfer') : t('qris')}
+                </StatusBadge>
               </div>
-            ) : null}
-            {paymentMethod !== 'cash' ? (
-              <p className="text-sm text-[var(--color-muted)]">{paymentLabel(paymentMethod)}</p>
-            ) : null}
-          </div>
 
-          {message ? <p role="alert" aria-live="polite" className="text-sm text-[var(--color-error)]">{message}</p> : null}
-          {submitted ? <StatusPill tone="success">{t('submitted')}</StatusPill> : null}
-        </Panel>
-      </div>
+              <SegmentedControl
+                value={paymentMethod}
+                onChange={(value) => setPaymentMethod(value as PaymentMethod)}
+                ariaLabel={t('payment')}
+                options={[
+                  {label: t('cash'), value: 'cash'},
+                  {label: t('transfer'), value: 'transfer'},
+                  {label: t('qris'), value: 'qris'},
+                ]}
+              />
 
-      <GlassPanel className="safe-bottom-bar fixed inset-x-4 z-30 md:right-6 md:left-32 xl:left-[calc(272px+2.5rem)]">
-        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-muted)]">{t('total')}</p>
-            <p className="font-display text-4xl font-semibold tracking-[-0.05em] tabular-nums md:text-6xl">{formatCurrency(total, locale)}</p>
-          </div>
-          <div className="flex flex-col items-stretch gap-2 md:items-end">
-            {!isOnline ? <p className="text-sm text-[var(--color-error)]">{t('disabled')}</p> : null}
-            <Button onClick={handleSubmit} disabled={isPending || !isOnline || cart.length === 0 || (paymentMethod === 'cash' && amountReceived < total)}>
+              {paymentMethod === 'cash' ? (
+                <FieldGroup label={t('received')} htmlFor={receivedId}>
+                  <Input
+                    id={receivedId}
+                    inputMode="numeric"
+                    value={received}
+                    onChange={(event) => setReceived(event.target.value)}
+                  />
+                  <div className="flex items-center justify-between rounded-[var(--radius-standard)] border border-border bg-card px-4 py-3">
+                    <span className="text-sm text-muted-foreground">{t('change')}</span>
+                    <span className="font-mono text-lg font-semibold">
+                      {formatCurrency(change, locale)}
+                    </span>
+                  </div>
+                </FieldGroup>
+              ) : (
+                <div className="rounded-[var(--radius-standard)] border border-border bg-card px-4 py-3 text-sm text-muted-foreground">
+                  {paymentMethod === 'transfer' ? t('transfer') : t('qris')}
+                </div>
+              )}
+            </div>
+
+            <AnimatePresence initial={false}>
+              {message ? (
+                <motion.p
+                  key="message"
+                  initial={{opacity: 0, y: reduceMotion ? 0 : 4}}
+                  animate={{opacity: 1, y: 0}}
+                  exit={{opacity: 0}}
+                  role="alert"
+                  aria-live="polite"
+                  className="text-sm text-destructive"
+                >
+                  {message}
+                </motion.p>
+              ) : null}
+            </AnimatePresence>
+
+            {submitted ? <StatusBadge tone="success">{t('submitted')}</StatusBadge> : null}
+
+            {!isOnline ? (
+              <p className="text-sm text-destructive">{t('disabled')}</p>
+            ) : null}
+
+            <Button className="w-full" onClick={handleSubmit} loading={isPending} disabled={!canSubmit}>
               {t('send')}
             </Button>
           </div>
-        </div>
-      </GlassPanel>
-    </div>
+        </DataCard>
+      </div>
+    </PageTransition>
   );
 }
