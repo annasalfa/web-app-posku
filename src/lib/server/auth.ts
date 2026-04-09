@@ -1,5 +1,6 @@
 import 'server-only';
 
+import {cache} from 'react';
 import {AppwriteException, type Models} from 'node-appwrite';
 
 import {createAdminClient, createSessionClient} from '@/lib/server/appwrite';
@@ -20,6 +21,10 @@ export async function loginWithEmailPassword(email: string, password: string) {
 }
 
 export async function getCurrentUser(): Promise<Models.User<Models.Preferences> | null> {
+  return readCurrentUser();
+}
+
+const readCurrentUser = cache(async (): Promise<Models.User<Models.Preferences> | null> => {
   if (!hasServerAppwriteEnv()) {
     return null;
   }
@@ -37,7 +42,7 @@ export async function getCurrentUser(): Promise<Models.User<Models.Preferences> 
   } catch {
     return null;
   }
-}
+});
 
 export async function requireCurrentUser() {
   const user = await getCurrentUser();

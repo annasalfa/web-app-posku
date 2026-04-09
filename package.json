@@ -12,7 +12,8 @@
     "e2e:ui": "playwright test --ui",
     "e2e:headed": "playwright test --headed",
     "appwrite:provision-db": "node scripts/provision-appwrite-database.mjs",
-    "appwrite:seed-db": "node scripts/seed-appwrite-data.mjs"
+    "appwrite:seed-db": "node scripts/seed-appwrite-data.mjs",
+    "appwrite:migrate-db": "node scripts/migrate-appwrite-data.mjs"
   },
   "keywords": [],
   "author": "",

@@ -11,11 +11,11 @@ import {
   FieldGroup,
   Input,
   MetricCard,
-  PageHeader,
-  PageTransition,
-  SegmentedControl,
-  StatusBadge,
-  Table,
+    PageTransition,
+    SegmentedControl,
+    StatusBadge,
+    SurfaceNotice,
+    Table,
   TableBody,
   TableCell,
   TableHead,
@@ -36,7 +36,13 @@ type Transaction = {
   notes: string;
 };
 
-export function ReportsPage({initialTransactions}: {initialTransactions: Transaction[]}) {
+export function ReportsPage({
+  initialTransactions,
+  loadError = false,
+}: {
+  initialTransactions: Transaction[];
+  loadError?: boolean;
+}) {
   const t = useTranslations('reports');
   const common = useTranslations('common');
   const locale = useLocale() as 'id' | 'en';
@@ -154,11 +160,12 @@ export function ReportsPage({initialTransactions}: {initialTransactions: Transac
 
   return (
     <PageTransition className="space-y-6">
-      <PageHeader
-        eyebrow="Reporting"
-        title={t('title')}
-      />
-
+      {loadError ? (
+        <SurfaceNotice
+          title={common('dataUnavailableTitle')}
+          description={common('dataUnavailableDescription')}
+        />
+      ) : null}
       <DataCard>
         <div className="space-y-4">
           <div className="grid gap-3 xl:grid-cols-[minmax(0,1fr)_auto]">

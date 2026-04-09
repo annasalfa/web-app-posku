@@ -1,8 +1,8 @@
 # PRD — F&B POS Web App
 
-> **Version:** 2.1.0
-> **Date:** 2026-04-04
-> **Status:** MVP implemented and verified locally
+> **Version:** 2.2.0
+> **Date:** 2026-04-06
+> **Status:** MVP implemented, verified locally, and synced to current repository structure
 
 ---
 
@@ -126,12 +126,13 @@ Owner bisnis F&B yang sekaligus berperan sebagai kasir — **solo operator**, 1 
 
 | Layer | Teknologi | Alasan |
 |-------|-----------|--------|
-| Frontend | **Next.js 15** (App Router, React 19) | Full-stack, SSR + Server Actions |
+| Frontend | **Next.js 15** (App Router, React 19, typed routes) | Full-stack, SSR + Server Actions |
 | Backend / BaaS | **Appwrite Cloud** | Auth + Database built-in, free tier cukup untuk 1 outlet |
 | Auth | **Appwrite Auth** (email + password) | Built-in, session di-manage otomatis |
 | Database | **Appwrite Databases** (document-based) | Collections + query filter + realtime subscription |
-| Styling | **Tailwind CSS** + custom UI primitives | Minimalis, dark mode, tablet-friendly |
+| Styling | **Tailwind CSS 4** + **shadcn/ui foundation** + Radix primitives | Sistem UI konsisten untuk tablet, dark mode, dan form/dialog modern |
 | i18n | **next-intl** | Bilingual ID/EN |
+| Motion | **motion** | Subtle interaction and screen transitions |
 | Export | **SheetJS** (client-side) | Generate CSV/Excel di browser, tidak perlu API route khusus |
 | Deployment | **Vercel** | Push → deploy otomatis, TLS, zero config |
 
@@ -170,6 +171,91 @@ flowchart TD
 | `stock_logs` | stock_logs | Audit trail perubahan stok |
 
 > Appwrite Auth menangani `users` secara built-in — tidak perlu collection terpisah.
+
+### Current Route Map
+
+| Route | Implementasi |
+|-------|--------------|
+| `/[locale]/login` | Login page |
+| `/[locale]` | Dashboard |
+| `/[locale]/cashier` | Cashier / checkout |
+| `/[locale]/history` | Transaction history |
+| `/[locale]/products` | Product management |
+| `/[locale]/reports` | Sales reports + CSV export |
+| `/[locale]/settings` | Theme + locale settings |
+| `/[locale]/stock` | Stock overview + adjustment |
+
+### Current Repository Structure Snapshot
+
+```text
+.
+├── src/app/
+│   ├── [locale]/
+│   │   ├── cashier/page.tsx
+│   │   ├── history/page.tsx
+│   │   ├── login/page.tsx
+│   │   ├── products/page.tsx
+│   │   ├── reports/page.tsx
+│   │   ├── settings/page.tsx
+│   │   ├── stock/page.tsx
+│   │   ├── layout.tsx
+│   │   ├── loading.tsx
+│   │   └── page.tsx
+│   ├── actions/
+│   │   ├── auth.ts
+│   │   ├── checkout.ts
+│   │   ├── products.ts
+│   │   └── stock.ts
+│   └── globals.css
+├── src/components/
+│   ├── auth/login-page.tsx
+│   ├── cashier/cashier-page.tsx
+│   ├── dashboard/dashboard-page.tsx
+│   ├── history/history-page.tsx
+│   ├── layout/{app-frame,providers}.tsx
+│   ├── products/products-page.tsx
+│   ├── reports/reports-page.tsx
+│   ├── settings/settings-page.tsx
+│   ├── stock/stock-page.tsx
+│   └── ui/
+│       ├── index.ts
+│       ├── pos.tsx
+│       └── shadcn-style primitives
+├── src/lib/
+│   ├── appwrite/{client,realtime}.ts
+│   ├── constants/navigation.ts
+│   ├── format/index.ts
+│   ├── server/
+│   │   ├── appwrite.ts
+│   │   ├── auth.ts
+│   │   ├── checkout.ts
+│   │   ├── env.ts
+│   │   ├── pos-types.ts
+│   │   ├── products.ts
+│   │   ├── sales.ts
+│   │   ├── session.ts
+│   │   └── stock.ts
+│   └── utils/{cn,use-online-status}.ts
+├── src/i18n/{navigation,request,routing}.ts
+├── messages/{en,id}.json
+├── scripts/
+│   ├── provision-appwrite-database.mjs
+│   ├── run-tests.mjs
+│   └── seed-appwrite-data.mjs
+├── e2e/
+│   ├── auth.setup.ts
+│   ├── auth-redirect.spec.ts
+│   ├── app.spec.ts
+│   ├── backoffice-interactions.spec.ts
+│   ├── ui-edge-cases.spec.ts
+│   └── support/appwrite-admin.ts
+└── config/docs root files
+```
+
+Catatan struktur:
+- `src/components/shared/` dan `src/lib/data/` masih ada sebagai folder legacy kosong.
+- Folder `public/` ada tetapi saat ini belum berisi asset runtime.
+- Tidak ada `src/app/api/*`; seluruh mutasi data saat ini lewat Server Actions.
 
 ---
 
@@ -277,7 +363,7 @@ erDiagram
 | Appwrite query response | < 500ms |
 
 ### Current Verification Snapshot
-- Local quality gate saat ini: `npm run lint`, `npx tsc --noEmit`, `npm run build`, dan `npx playwright test`
+- Local quality gate saat ini: `npm run lint`, `npx tsc --noEmit`, `npm run build`, `npm test`, dan `npx playwright test`
 - E2E browser coverage mencakup:
   - auth setup, auth redirect, logout
   - dashboard dan navigasi utama
@@ -299,6 +385,8 @@ erDiagram
 | **appwrite** (Web SDK) | Browser-side capability checks / future realtime hooks |
 | **node-appwrite** (Node SDK) | Server Actions: auth session, createDocument, listDocuments, updateDocument dengan API key |
 | **SheetJS (xlsx)** | Client-side CSV/Excel generation dari array data transaksi |
-| **Tailwind CSS 4** | Utility-first styling untuk custom component system |
+| **Tailwind CSS 4** | Utility-first styling untuk tokens global dan foundation UI |
+| **shadcn/ui + Radix** | Primitive components untuk dialog, sheet, select, table, toggle, dan input |
+| **motion** | Subtle animation layer untuk transisi dan interaction states |
 | **next-intl** | i18n bilingual ID/EN |
 | **next-themes** | Dark mode toggle |

@@ -16,6 +16,8 @@ opencode.json
 playwright-report/
 test-results/
 playwright/.auth/
+.testsprite/
+testsprite_tests/
 
 *.log
 npm-debug.log*

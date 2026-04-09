@@ -1,8 +1,9 @@
-import 'server-only';
+import "server-only";
 
 import {ID, Query} from 'node-appwrite';
 
 import {createAdminClient} from '@/lib/server/appwrite';
+import {listAllDocuments} from '@/lib/server/database';
 import {getDatabaseEnv, hasDatabaseAppwriteEnv} from '@/lib/server/env';
 import {
   type CategoryDocument,
@@ -18,14 +19,13 @@ export async function listCategories() {
   }
 
   const {databaseId, categoriesCollectionId} = getDatabaseEnv();
-  const {databases} = createAdminClient();
-  const result = await databases.listDocuments<CategoryDocument>({
+  const categories = await listAllDocuments<CategoryDocument>({
     databaseId,
     collectionId: categoriesCollectionId,
-    queries: [Query.orderAsc('name'), Query.limit(200)],
+    queries: [Query.orderAsc('name')],
   });
 
-  return result.documents;
+  return categories;
 }
 
 export async function listProducts(options?: {
@@ -38,7 +38,7 @@ export async function listProducts(options?: {
 
   const {databaseId, productsCollectionId} = getDatabaseEnv();
   const {databases} = createAdminClient();
-  const queries = [Query.orderAsc('name'), Query.limit(200)];
+  const queries = [Query.orderAsc('name')];
 
   if (options?.activeOnly) {
     queries.push(Query.equal('isActive', true));
@@ -46,15 +46,19 @@ export async function listProducts(options?: {
 
   const [categories, products] = await Promise.all([
     listCategories(),
-    databases.listDocuments<ProductDocument>({
+    listAllDocuments<ProductDocument>({
       databaseId,
       collectionId: productsCollectionId,
       queries,
     }),
   ]);
 
-  const categoryMap = new Map(categories.map((category) => [category.$id, category.name]));
-  const mapped = products.documents.map((document) => mapProductDocument(document, categoryMap));
+  const categoryMap = new Map(
+    categories.map((category) => [category.$id, category.name]),
+  );
+  const mapped = products.map((document) =>
+    mapProductDocument(document, categoryMap),
+  );
 
   if (!options?.query) {
     return mapped;
@@ -63,8 +67,37 @@ export async function listProducts(options?: {
   const normalizedQuery = options.query.toLowerCase();
 
   return mapped.filter((product) => {
-    return `${product.name} ${product.categoryName}`.toLowerCase().includes(normalizedQuery);
+    return `${product.name} ${product.categoryName}`
+      .toLowerCase()
+      .includes(normalizedQuery);
   });
+}
+
+export async function listProductsByIds(productIds: string[]) {
+  if (!hasDatabaseAppwriteEnv()) {
+    throw new Error('APPWRITE_DATABASE_ENV_MISSING');
+  }
+
+  const uniqueIds = Array.from(new Set(productIds.filter(Boolean)));
+
+  if (uniqueIds.length === 0) {
+    return [];
+  }
+
+  const {databaseId, productsCollectionId} = getDatabaseEnv();
+  const [categories, products] = await Promise.all([
+    listCategories(),
+    listAllDocuments<ProductDocument>({
+      databaseId,
+      collectionId: productsCollectionId,
+      queries: [Query.equal('$id', uniqueIds)],
+    }),
+  ]);
+
+  const categoryMap = new Map(
+    categories.map((category) => [category.$id, category.name]),
+  );
+  return products.map((document) => mapProductDocument(document, categoryMap));
 }
 
 export async function getProduct(productId: string) {
@@ -82,7 +115,9 @@ export async function getProduct(productId: string) {
   });
 }
 
-export async function saveProduct(input: SaveProductInput): Promise<ProductRecord> {
+export async function saveProduct(
+  input: SaveProductInput,
+): Promise<ProductRecord> {
   if (!hasDatabaseAppwriteEnv()) {
     throw new Error('APPWRITE_DATABASE_ENV_MISSING');
   }
@@ -106,7 +141,9 @@ export async function saveProduct(input: SaveProductInput): Promise<ProductRecor
       });
 
   const categories = await listCategories();
-  const categoryMap = new Map(categories.map((category) => [category.$id, category.name]));
+  const categoryMap = new Map(
+    categories.map((category) => [category.$id, category.name]),
+  );
 
   return mapProductDocument(document, categoryMap);
 }

@@ -12,12 +12,12 @@ import {
   EmptyState,
   FieldGroup,
   Input,
-  PageHeader,
   PageTransition,
   ScrollArea,
   SearchField,
   SegmentedControl,
   StatusBadge,
+  SurfaceNotice,
 } from '@/components/ui';
 import {formatCurrency} from '@/lib/format';
 import {cn} from '@/lib/utils/cn';
@@ -43,7 +43,11 @@ type CashierPageProps = {
   initialCategories: string[];
 };
 
-export function CashierPage({initialProducts, initialCategories}: CashierPageProps) {
+export function CashierPage({
+  initialProducts,
+  initialCategories,
+  loadError = false,
+}: CashierPageProps & {loadError?: boolean}) {
   const t = useTranslations('cashier');
   const common = useTranslations('common');
   const locale = useLocale() as 'id' | 'en';
@@ -147,11 +151,12 @@ export function CashierPage({initialProducts, initialCategories}: CashierPagePro
 
   return (
     <PageTransition className="space-y-6">
-      <PageHeader
-        eyebrow="Checkout"
-        title={t('title')}
-      />
-
+      {loadError ? (
+        <SurfaceNotice
+          title={common('dataUnavailableTitle')}
+          description={common('dataUnavailableDescription')}
+        />
+      ) : null}
       <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_26rem]">
         <div className="space-y-4">
           <DataCard className="surface-grid">

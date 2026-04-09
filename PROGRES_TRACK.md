@@ -28,6 +28,7 @@
 - [x] Refactor settings.
 - [x] Lint, typecheck, build, dan verification final lokal.
 - [x] Rapikan repo untuk deployment: `.env.example`, smoke test command, dan sanitasi secret repo.
+- [x] Sinkronkan `PRD.md`, `STATE.md`, dan `PROGRES_TRACK.md` dengan struktur codebase aktual.
 
 ## Checklist Implementasi
 - [x] Semua layar utama pindah dari `@/components/shared/ui` ke `@/components/ui`.
@@ -37,6 +38,8 @@
 - [x] Stock memakai dua-zona inventory + audit trail.
 - [x] Settings memakai segmented controls untuk theme dan locale.
 - [x] History memakai list/detail layout yang stabil.
+- [x] Dokumen status dan PRD menampilkan route map, struktur `src/`, scripts, i18n, dan suite test yang benar-benar ada di repo.
+- [x] Catatan struktur sekarang mengakui folder legacy kosong: `src/components/shared/`, `src/lib/data/`, dan `public/`.
 
 ## Validation Checklist
 - [x] `npm run lint`
@@ -45,9 +48,12 @@
 - [x] `npm test`
 - [x] `npm test -- --coverage` kompatibel dan tidak gagal walau browser coverage belum dikonfigurasi
 - [x] `npx playwright test` sudah tervalidasi lokal pada environment Appwrite + akun uji yang lengkap
+- [x] `TestSprite` frontend run selesai dan menghasilkan artefak `testsprite_tests/`
 - [x] Verifikasi wrapping nama produk panjang dan transaction ID
 - [x] Verifikasi breakpoint mobile/tablet/desktop
 - [x] Verifikasi cashier: add item, qty, out of stock, cash, transfer, QRIS, total, change, submit
+- [x] Verifikasi snapshot struktur repo terhadap file aktual dengan `src/app`, `src/components`, `src/lib`, `messages`, `scripts`, dan `e2e`
+- [x] Triage failure TestSprite prioritas tinggi: checkout submit, product save/create, dan positive stock adjustment
 - [ ] Verifikasi manual light/dark di device target produksi
 - [ ] Verifikasi manual locale `id/en` di device target produksi
 - [ ] Verifikasi manual offline state di device target produksi
@@ -59,6 +65,8 @@
 - [x] `.env.example` tersedia sebagai source of truth env lokal/deploy.
 - [x] `opencode.json` tidak lagi di-track dan diganti template `opencode.example.json`.
 - [x] Hardcoded Appwrite key dan kredensial akun uji dibersihkan dari repo saat ini.
+- [x] Provisioning Appwrite pada environment target sudah berhasil menurut konfirmasi operator (`2026-04-09`).
+- [x] Deploy Vercel sudah live menurut konfirmasi operator (`2026-04-09`).
 - [ ] Rotate Appwrite API key yang pernah terpapar di history git.
 - [ ] Rotate/reset kredensial akun uji yang pernah terpapar di history git.
 - [ ] Verifikasi env vars pada target deploy aktual (mis. Vercel).
@@ -71,3 +79,39 @@
 - Batch 4: `feat(data-pages): redesign dashboard history reports products stock settings`
 - Batch 5: `docs(ui): add progress tracking for redesign rollout`
 - Batch 6: `chore(verification): add smoke test flow and deployment hygiene fixes`
+- Batch 7: `docs(state): sync project docs with current repository structure`
+- Batch 8: `fix(appwrite): add transactional writes, read fallbacks, and history snapshots`
+- Batch 9: `fix(products): guard empty-name saves and sync post-deploy status`
+
+## Latest Hardening Work
+- [x] Tambah helper Appwrite server untuk pagination internal, retry transient read, dan transaksi database native.
+- [x] Dashboard/cashier/history/products/reports/stock kini punya fallback state saat read Appwrite gagal, bukan crash route.
+- [x] `settings` kini memverifikasi auth valid di server dan tidak lagi bergantung hanya pada cookie presence di middleware.
+- [x] Checkout dan stock adjustment kini memakai Appwrite database transaction untuk menjaga konsistensi multi-dokumen.
+- [x] `transaction_items` kini menyimpan `productNameSnapshot` untuk menjaga akurasi histori saat nama produk berubah.
+- [x] Provisioning database diperketat: permission koleksi bisnis tidak lagi memberi CRUD langsung ke user session browser.
+- [x] Tambah script migrasi/backfill: `npm run appwrite:migrate-db`.
+- [x] Tambah regression E2E untuk stale-session redirect dan histori snapshot setelah rename produk.
+- [x] `npm run lint`, `npm run build`, dan `npx tsc --noEmit` lolos setelah perubahan hardening ini.
+- [x] `npm run appwrite:migrate-db` sudah dijalankan pada environment Appwrite target (`Backfilled productNameSnapshot on 0 transaction items.`).
+- [x] Rerun targeted Playwright production suites untuk flow prioritas tinggi TestSprite (`backoffice-interactions` dan `ui-edge-cases`).
+
+## Latest TestSprite Run
+- [x] Build production lokal dijalankan sebelum TestSprite.
+- [x] TestSprite frontend plan dan generated cases berhasil dibuat di `testsprite_tests/`.
+- [x] TestSprite frontend execution selesai dengan hasil `15` pass / `8` fail (`65.22%`).
+- [x] Ringkasan hasil ditulis ke `testsprite_tests/testsprite-mcp-test-report.md`.
+- [x] Korelasikan failure TestSprite dengan suite Playwright yang sudah ada untuk memisahkan bug aplikasi vs false negative generator.
+- [x] Debug log produksi yang paling relevan dari sesi ini:
+  - `UNAUTHENTICATED` muncul pada sebagian route render saat run berakhir
+  - `PRODUCT_NAME_REQUIRED` muncul pada salah satu alur simpan produk
+- [x] Tambah guard client-side untuk nama produk kosong agar tidak lagi memunculkan generic Server Components production error pada path validasi.
+
+## Snapshot Struktur Saat Ini
+- App Router lokalized ada di `src/app/[locale]` dengan route: `login`, `dashboard`, `cashier`, `history`, `products`, `reports`, `settings`, dan `stock`.
+- Server actions aktif ada di `src/app/actions/{auth,checkout,products,stock}.ts`.
+- UI foundation aktif ada di `src/components/ui/*` dengan `pos.tsx` dan `index.ts` sebagai komposisi helper.
+- Domain server aktif ada di `src/lib/server/{appwrite,auth,checkout,env,pos-types,products,sales,session,stock}.ts`.
+- Dukungan i18n aktif ada di `src/i18n/*` dan `messages/{id,en}.json`.
+- Verification/runtime support aktif ada di `scripts/*`, `playwright.config.ts`, dan `e2e/*`.
+- Tidak ada `src/app/api/*` pada snapshot repo saat ini; mutasi server memakai Server Actions.

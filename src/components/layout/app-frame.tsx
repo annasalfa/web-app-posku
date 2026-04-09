@@ -7,7 +7,7 @@ import type {ReactNode} from 'react';
 import {useMemo, useState} from 'react';
 
 import {Button} from '@/components/ui/button';
-import {Sheet, SheetContent, SheetHeader, SheetTitle} from '@/components/ui/sheet';
+import {Sheet, SheetContent} from '@/components/ui/sheet';
 import {StatusBadge} from '@/components/ui/pos';
 import {Link} from '@/i18n/navigation';
 import {NAV_ITEMS} from '@/lib/constants/navigation';
@@ -63,17 +63,9 @@ export function AppFrame({
               </Button>
 
               <div className="min-w-0 flex-1">
-                <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
-                  {t('common.appName')}
+                <p className="truncate text-xl font-bold tracking-[-0.03em] md:text-2xl">
+                  {currentNav ? t(`nav.${currentNav.labelKey}`) : t('common.appName')}
                 </p>
-                <div className="flex flex-wrap items-center gap-2">
-                  <p className="truncate text-xl font-bold tracking-[-0.03em] md:text-2xl">
-                    {currentNav ? t(`nav.${currentNav.labelKey}`) : t('common.appName')}
-                  </p>
-                  <span className="hidden text-sm text-muted-foreground md:inline">
-                    {t('common.ownerMode')}
-                  </span>
-                </div>
               </div>
 
               {authenticated ? (
@@ -101,15 +93,7 @@ export function AppFrame({
 
       <Sheet open={navOpen} onOpenChange={setNavOpen}>
         <SheetContent side="left" className="w-[min(22rem,92vw)] bg-sidebar p-0 text-sidebar-foreground">
-          <SheetHeader className="border-b border-sidebar-border px-6 py-5 text-left">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
-              {t('common.appName')}
-            </p>
-            <SheetTitle className="text-2xl font-bold tracking-[-0.04em]">
-              {shell('brandTitle')}
-            </SheetTitle>
-          </SheetHeader>
-          <div className="px-4 py-4">
+          <div className="px-4 py-5">
             <MobileRail locale={locale} pathname={pathname ?? ''} onNavigate={() => setNavOpen(false)} />
           </div>
         </SheetContent>
@@ -120,24 +104,9 @@ export function AppFrame({
 
 function DesktopRail({locale, pathname}: {locale: string; pathname: string}) {
   const t = useTranslations();
-  const shell = useTranslations('shell');
 
   return (
     <div className="surface-grid sticky top-4 flex h-[calc(100dvh-2rem)] w-full flex-col rounded-[calc(var(--radius-card)+8px)] border border-sidebar-border bg-sidebar px-3 py-4 shadow-sm xl:px-4 xl:py-5">
-      <div className="mb-8 rounded-[var(--radius-card)] border border-sidebar-border/80 bg-background/70 px-3 py-4 xl:px-4">
-        <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
-          {t('common.appName')}
-        </p>
-        <div className="mt-2">
-          <h1 className="text-[1.45rem] font-bold tracking-[-0.05em] xl:text-[1.8rem]">
-            {shell('brandTitle')}
-          </h1>
-          <p className="mt-1 text-sm leading-6 text-muted-foreground">
-            {t('common.ownerMode')}
-          </p>
-        </div>
-      </div>
-
       <nav className="flex flex-1 flex-col gap-2">
         {NAV_ITEMS.map((item) => {
           const active = pathname === `/${locale}${item.href}` || (item.href === '/' && pathname === `/${locale}`);

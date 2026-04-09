@@ -41,7 +41,9 @@
     "paymentQris": "QRIS",
     "active": "Aktif",
     "inactive": "Nonaktif",
-    "outOfStock": "Stok habis"
+    "outOfStock": "Stok habis",
+    "dataUnavailableTitle": "Data sedang tidak tersedia",
+    "dataUnavailableDescription": "Halaman tetap ditampilkan dengan data cadangan. Coba refresh beberapa saat lagi."
   },
   "shell": {
     "brandTitle": "POSKU",
@@ -131,7 +133,11 @@
     "price": "Harga",
     "category": "Kategori",
     "stockCount": "stok",
-    "empty": "Tidak ada produk yang cocok."
+    "empty": "Tidak ada produk yang cocok.",
+    "nameRequired": "Nama produk wajib diisi.",
+    "priceInvalid": "Harga produk tidak valid.",
+    "stockInvalid": "Stok awal tidak valid.",
+    "saveFailed": "Produk tidak dapat disimpan sekarang. Coba lagi."
   },
   "stock": {
     "title": "Stok",

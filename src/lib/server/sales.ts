@@ -2,7 +2,7 @@ import 'server-only';
 
 import {Query} from 'node-appwrite';
 
-import {createAdminClient} from '@/lib/server/appwrite';
+import {listAllDocuments} from '@/lib/server/database';
 import {getDatabaseEnv, hasDatabaseAppwriteEnv} from '@/lib/server/env';
 import {listProducts} from '@/lib/server/products';
 import {
@@ -14,44 +14,41 @@ import {
   type TransactionRecord,
 } from '@/lib/server/pos-types';
 
-const DEFAULT_TRANSACTION_LIMIT = 200;
-const DASHBOARD_TRANSACTION_LIMIT = 200;
 const TRANSACTION_ITEM_CHUNK_SIZE = 20;
-const TRANSACTION_ITEM_QUERY_LIMIT = 200;
 const LOW_STOCK_THRESHOLD = 5;
 
-export async function listTransactions(limit = DEFAULT_TRANSACTION_LIMIT): Promise<TransactionRecord[]> {
+export async function listTransactions(limit?: number): Promise<TransactionRecord[]> {
   if (!hasDatabaseAppwriteEnv()) {
     throw new Error('APPWRITE_DATABASE_ENV_MISSING');
   }
 
   const {databaseId, transactionsCollectionId} = getDatabaseEnv();
-  const {databases} = createAdminClient();
-  const [products, transactions] = await Promise.all([
+  const [products, transactionDocuments] = await Promise.all([
     listProducts(),
-    databases.listDocuments<TransactionDocument>({
+    listAllDocuments<TransactionDocument>({
       databaseId,
       collectionId: transactionsCollectionId,
-      queries: [Query.orderDesc('$createdAt'), Query.limit(limit)],
+      queries: [Query.orderDesc('$createdAt')],
+      maxDocuments: limit,
     }),
   ]);
 
-  if (transactions.documents.length === 0) {
+  if (transactionDocuments.length === 0) {
     return [];
   }
 
   const itemsByTransactionId = await listTransactionItemsByTransactionIds(
-    transactions.documents.map((transaction) => transaction.$id),
+    transactionDocuments.map((transaction) => transaction.$id),
     new Map(products.map((product) => [product.id, product.name])),
   );
 
-  return transactions.documents.map((document) =>
+  return transactionDocuments.map((document) =>
     mapTransactionDocument(document, itemsByTransactionId.get(document.$id) ?? []),
   );
 }
 
 export async function getDashboardMetrics(): Promise<DashboardMetricsRecord> {
-  const [products, transactions] = await Promise.all([listProducts(), listTransactions(DASHBOARD_TRANSACTION_LIMIT)]);
+  const [products, transactions] = await Promise.all([listProducts(), listTransactions()]);
   const todayKey = getDateKey(new Date());
   const todayTransactions = transactions.filter((transaction) => getDateKey(new Date(transaction.createdAt)) === todayKey);
   const revenueToday = todayTransactions.reduce((sum, transaction) => sum + transaction.totalAmount, 0);
@@ -100,21 +97,20 @@ export async function getDashboardMetrics(): Promise<DashboardMetricsRecord> {
 
 async function listTransactionItemsByTransactionIds(transactionIds: string[], productNames: Map<string, string>) {
   const {databaseId, transactionItemsCollectionId} = getDatabaseEnv();
-  const {databases} = createAdminClient();
   const grouped = new Map<string, ReturnType<typeof mapTransactionItemDocument>[]>();
   const chunks = chunk(transactionIds, TRANSACTION_ITEM_CHUNK_SIZE);
   const responses = await Promise.all(
     chunks.map((ids) =>
-      databases.listDocuments<TransactionItemDocument>({
+      listAllDocuments<TransactionItemDocument>({
         databaseId,
         collectionId: transactionItemsCollectionId,
-        queries: [Query.equal('transactionId', ids), Query.limit(TRANSACTION_ITEM_QUERY_LIMIT)],
+        queries: [Query.equal('transactionId', ids)],
       }),
     ),
   );
 
   for (const response of responses) {
-    for (const document of response.documents) {
+    for (const document of response) {
       const items = grouped.get(document.transactionId) ?? [];
 
       items.push(mapTransactionItemDocument(document, productNames.get(document.productId) ?? document.productId));

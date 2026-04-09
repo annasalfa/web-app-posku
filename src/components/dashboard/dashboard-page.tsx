@@ -6,9 +6,9 @@ import {
   DataCard,
   EmptyState,
   MetricCard,
-  PageHeader,
   PageTransition,
   StatusBadge,
+  SurfaceNotice,
 } from '@/components/ui';
 import {formatCompactNumber, formatCurrency} from '@/lib/format';
 
@@ -29,17 +29,25 @@ type DashboardMetrics = {
   }>;
 };
 
-export function DashboardPage({initialMetrics}: {initialMetrics: DashboardMetrics}) {
+export function DashboardPage({
+  initialMetrics,
+  loadError = false,
+}: {
+  initialMetrics: DashboardMetrics;
+  loadError?: boolean;
+}) {
   const t = useTranslations('dashboard');
+  const common = useTranslations('common');
   const locale = useLocale() as 'id' | 'en';
 
   return (
     <PageTransition className="space-y-6">
-      <PageHeader
-        eyebrow="Overview"
-        title={t('title')}
-      />
-
+      {loadError ? (
+        <SurfaceNotice
+          title={common('dataUnavailableTitle')}
+          description={common('dataUnavailableDescription')}
+        />
+      ) : null}
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         <MetricCard label={t('revenue')} value={formatCurrency(initialMetrics.revenueToday, locale)} tone="info" />
         <MetricCard label={t('orders')} value={formatCompactNumber(initialMetrics.ordersToday, locale)} />

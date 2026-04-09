@@ -6,13 +6,13 @@ import {useDeferredValue, useId, useMemo, useState} from 'react';
 import {
   DataCard,
   EmptyState,
-  PageHeader,
-  PageTransition,
-  SearchField,
-  SegmentedControl,
-  Separator,
-  StatusBadge,
-} from '@/components/ui';
+    PageTransition,
+    SearchField,
+    SegmentedControl,
+    Separator,
+    StatusBadge,
+    SurfaceNotice,
+  } from '@/components/ui';
 import {formatCurrency, formatDateLabel} from '@/lib/format';
 import {cn} from '@/lib/utils/cn';
 
@@ -37,7 +37,13 @@ type Transaction = {
   items: TransactionItem[];
 };
 
-export function HistoryPage({initialTransactions}: {initialTransactions: Transaction[]}) {
+export function HistoryPage({
+  initialTransactions,
+  loadError = false,
+}: {
+  initialTransactions: Transaction[];
+  loadError?: boolean;
+}) {
   const t = useTranslations('history');
   const common = useTranslations('common');
   const cashier = useTranslations('cashier');
@@ -69,11 +75,12 @@ export function HistoryPage({initialTransactions}: {initialTransactions: Transac
 
   return (
     <PageTransition className="space-y-6">
-      <PageHeader
-        eyebrow="Transactions"
-        title={t('title')}
-      />
-
+      {loadError ? (
+        <SurfaceNotice
+          title={common('dataUnavailableTitle')}
+          description={common('dataUnavailableDescription')}
+        />
+      ) : null}
       <div className="grid gap-4 lg:grid-cols-[minmax(0,1.1fr)_minmax(20rem,0.9fr)]">
         <DataCard title={t('title')} description={t('searchPlaceholder')}>
           <div className="space-y-4">

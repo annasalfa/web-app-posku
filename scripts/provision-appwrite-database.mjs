@@ -6,8 +6,6 @@ import {
   Databases,
   DatabasesIndexType,
   OrderBy,
-  Permission,
-  Role,
 } from 'node-appwrite';
 
 loadEnvFile(path.resolve(process.cwd(), '.env'));
@@ -55,6 +53,7 @@ const COLLECTIONS = [
       {type: 'boolean', key: 'isActive', required: true},
     ],
     indexes: [
+      {key: 'products_name_key', type: DatabasesIndexType.Key, attributes: ['name'], orders: [OrderBy.Asc]},
       {key: 'products_category_id_key', type: DatabasesIndexType.Key, attributes: ['categoryId'], orders: [OrderBy.Asc]},
       {key: 'products_is_active_key', type: DatabasesIndexType.Key, attributes: ['isActive'], orders: [OrderBy.Asc]},
     ],
@@ -79,6 +78,7 @@ const COLLECTIONS = [
     attributes: [
       {type: 'string', key: 'transactionId', size: 36, required: true},
       {type: 'string', key: 'productId', size: 36, required: true},
+      {type: 'string', key: 'productNameSnapshot', size: 255, required: false},
       {type: 'integer', key: 'quantity', required: true, min: 1},
       {type: 'float', key: 'unitPrice', required: true, min: 0},
       {type: 'float', key: 'subtotal', required: true, min: 0},
@@ -86,6 +86,12 @@ const COLLECTIONS = [
     indexes: [
       {key: 'transaction_items_transaction_id_key', type: DatabasesIndexType.Key, attributes: ['transactionId'], orders: [OrderBy.Asc]},
       {key: 'transaction_items_product_id_key', type: DatabasesIndexType.Key, attributes: ['productId'], orders: [OrderBy.Asc]},
+      {
+        key: 'tx_items_tx_product_key',
+        type: DatabasesIndexType.Key,
+        attributes: ['transactionId', 'productId'],
+        orders: [OrderBy.Asc, OrderBy.Asc],
+      },
     ],
   },
   {
@@ -101,6 +107,7 @@ const COLLECTIONS = [
     ],
     indexes: [
       {key: 'stock_logs_product_id_key', type: DatabasesIndexType.Key, attributes: ['productId'], orders: [OrderBy.Asc]},
+      {key: 'stock_logs_transaction_id_key', type: DatabasesIndexType.Key, attributes: ['transactionId'], orders: [OrderBy.Asc]},
     ],
   },
 ];
@@ -118,7 +125,7 @@ async function provision() {
 }
 
 async function ensureCollection(collection) {
-  const existing = await maybe(
+  const existing = await maybe(() =>
     databases.getCollection({
       databaseId: config.databaseId,
       collectionId: collection.id,
@@ -126,25 +133,55 @@ async function ensureCollection(collection) {
   );
 
   if (existing) {
+    await ensureCollectionSettings(collection, existing);
     console.log(`Collection exists: ${collection.id}`);
     return;
   }
 
-  await databases.createCollection({
-    databaseId: config.databaseId,
-    collectionId: collection.id,
-    name: collection.name,
-    permissions: defaultCollectionPermissions(),
-    documentSecurity: false,
-    enabled: true,
-  });
+  await retryOperation(() =>
+    databases.createCollection({
+      databaseId: config.databaseId,
+      collectionId: collection.id,
+      name: collection.name,
+      permissions: defaultCollectionPermissions(),
+      documentSecurity: false,
+      enabled: true,
+    }),
+  );
 
   console.log(`Created collection: ${collection.id}`);
 }
 
+async function ensureCollectionSettings(collection, existing) {
+  const nextPermissions = defaultCollectionPermissions();
+  const currentPermissions = [...(existing.permissions ?? [])].sort();
+
+  if (
+    existing.name === collection.name &&
+    existing.documentSecurity === false &&
+    existing.enabled === true &&
+    JSON.stringify(currentPermissions) === JSON.stringify(nextPermissions)
+  ) {
+    return;
+  }
+
+  await retryOperation(() =>
+    databases.updateCollection({
+      databaseId: config.databaseId,
+      collectionId: collection.id,
+      name: collection.name,
+      permissions: nextPermissions,
+      documentSecurity: false,
+      enabled: true,
+    }),
+  );
+
+  console.log(`Updated collection settings: ${collection.id}`);
+}
+
 async function ensureAttributes(collection) {
   for (const attribute of collection.attributes) {
-    const existing = await maybe(
+    const existing = await maybe(() =>
       databases.getAttribute({
         databaseId: config.databaseId,
         collectionId: collection.id,
@@ -165,7 +202,7 @@ async function ensureAttributes(collection) {
 
 async function ensureIndexes(collection) {
   for (const index of collection.indexes) {
-    const existing = await maybe(
+    const existing = await maybe(() =>
       databases.getIndex({
         databaseId: config.databaseId,
         collectionId: collection.id,
@@ -178,14 +215,16 @@ async function ensureIndexes(collection) {
       continue;
     }
 
-    await databases.createIndex({
-      databaseId: config.databaseId,
-      collectionId: collection.id,
-      key: index.key,
-      type: index.type,
-      attributes: index.attributes,
-      orders: index.orders,
-    });
+    await retryOperation(() =>
+      databases.createIndex({
+        databaseId: config.databaseId,
+        collectionId: collection.id,
+        key: index.key,
+        type: index.type,
+        attributes: index.attributes,
+        orders: index.orders,
+      }),
+    );
 
     console.log(`Created index ${collection.id}.${index.key}`);
   }
@@ -200,49 +239,59 @@ async function createAttribute(collectionId, attribute) {
   };
 
   if (attribute.type === 'string') {
-    return databases.createStringAttribute({
-      ...base,
-      size: attribute.size,
-      xdefault: attribute.xdefault,
-      array: false,
-      encrypt: false,
-    });
+    return retryOperation(() =>
+      databases.createStringAttribute({
+        ...base,
+        size: attribute.size,
+        xdefault: attribute.xdefault,
+        array: false,
+        encrypt: false,
+      }),
+    );
   }
 
   if (attribute.type === 'integer') {
-    return databases.createIntegerAttribute({
-      ...base,
-      min: attribute.min,
-      max: attribute.max,
-      xdefault: attribute.xdefault,
-      array: false,
-    });
+    return retryOperation(() =>
+      databases.createIntegerAttribute({
+        ...base,
+        min: attribute.min,
+        max: attribute.max,
+        xdefault: attribute.xdefault,
+        array: false,
+      }),
+    );
   }
 
   if (attribute.type === 'float') {
-    return databases.createFloatAttribute({
-      ...base,
-      min: attribute.min,
-      max: attribute.max,
-      xdefault: attribute.xdefault,
-      array: false,
-    });
+    return retryOperation(() =>
+      databases.createFloatAttribute({
+        ...base,
+        min: attribute.min,
+        max: attribute.max,
+        xdefault: attribute.xdefault,
+        array: false,
+      }),
+    );
   }
 
   if (attribute.type === 'boolean') {
-    return databases.createBooleanAttribute({
-      ...base,
-      xdefault: attribute.xdefault,
-      array: false,
-    });
+    return retryOperation(() =>
+      databases.createBooleanAttribute({
+        ...base,
+        xdefault: attribute.xdefault,
+        array: false,
+      }),
+    );
   }
 
   if (attribute.type === 'datetime') {
-    return databases.createDatetimeAttribute({
-      ...base,
-      xdefault: attribute.xdefault,
-      array: false,
-    });
+    return retryOperation(() =>
+      databases.createDatetimeAttribute({
+        ...base,
+        xdefault: attribute.xdefault,
+        array: false,
+      }),
+    );
   }
 
   throw new Error(`Unsupported attribute type: ${attribute.type}`);
@@ -252,11 +301,13 @@ async function waitForAttribute(collectionId, key) {
   const startedAt = Date.now();
 
   while (Date.now() - startedAt < 120000) {
-    const attribute = await databases.getAttribute({
-      databaseId: config.databaseId,
-      collectionId,
-      key,
-    });
+    const attribute = await retryOperation(() =>
+      databases.getAttribute({
+        databaseId: config.databaseId,
+        collectionId,
+        key,
+      }),
+    );
 
     if (attribute.status === 'available') {
       return;
@@ -273,12 +324,7 @@ async function waitForAttribute(collectionId, key) {
 }
 
 function defaultCollectionPermissions() {
-  return [
-    Permission.read(Role.users()),
-    Permission.create(Role.users()),
-    Permission.update(Role.users()),
-    Permission.delete(Role.users()),
-  ];
+  return [];
 }
 
 function requiredEnv(name) {
@@ -316,9 +362,9 @@ function loadEnvFile(filePath) {
   }
 }
 
-async function maybe(promise) {
+async function maybe(task) {
   try {
-    return await promise;
+    return await retryOperation(task);
   } catch (error) {
     if (error?.code === 404) {
       return null;
@@ -326,6 +372,43 @@ async function maybe(promise) {
 
     throw error;
   }
+}
+
+async function retryOperation(task, attempts = 3) {
+  let lastError;
+
+  for (let attempt = 1; attempt <= attempts; attempt += 1) {
+    try {
+      return await task();
+    } catch (error) {
+      lastError = error;
+
+      if (!isRetryableNetworkError(error) || attempt === attempts) {
+        throw error;
+      }
+
+      await sleep(400 * attempt);
+    }
+  }
+
+  throw lastError;
+}
+
+function isRetryableNetworkError(error) {
+  if (!(error instanceof Error)) {
+    return false;
+  }
+
+  const text = `${error.name} ${error.message} ${error.cause?.code ?? ''}`.toLowerCase();
+
+  return (
+    text.includes('fetch failed') ||
+    text.includes('timeout') ||
+    text.includes('timedout') ||
+    text.includes('etimedout') ||
+    text.includes('econnreset') ||
+    text.includes('econnrefused')
+  );
 }
 
 function sleep(ms) {

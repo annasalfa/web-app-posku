@@ -2,7 +2,7 @@
 
 import type {ReactNode} from 'react';
 import {motion, useReducedMotion} from 'motion/react';
-import {Search} from 'lucide-react';
+import {AlertTriangle, Search} from 'lucide-react';
 
 import {Badge} from '@/components/ui/badge';
 import {Card, CardContent, CardDescription, CardHeader, CardTitle} from '@/components/ui/card';
@@ -29,41 +29,6 @@ export function PageTransition({
     >
       {children}
     </motion.div>
-  );
-}
-
-export function PageHeader({
-  eyebrow,
-  title,
-  description,
-  action,
-}: {
-  eyebrow?: string;
-  title: string;
-  description?: string;
-  action?: ReactNode;
-}) {
-  return (
-    <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-      <div className="space-y-2">
-        {eyebrow ? (
-          <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
-            {eyebrow}
-          </p>
-        ) : null}
-        <div className="space-y-1">
-          <h1 className="text-3xl font-bold tracking-[-0.03em] sm:text-4xl">
-            {title}
-          </h1>
-          {description ? (
-            <p className="max-w-2xl text-sm leading-6 text-muted-foreground sm:text-base">
-              {description}
-            </p>
-          ) : null}
-        </div>
-      </div>
-      {action ? <div className="flex items-center gap-3">{action}</div> : null}
-    </div>
   );
 }
 
@@ -149,6 +114,32 @@ export function EmptyState({
         <p className="max-w-sm text-sm leading-6 text-muted-foreground">
           {description}
         </p>
+      </div>
+    </div>
+  );
+}
+
+export function SurfaceNotice({
+  title,
+  description,
+  className,
+}: {
+  title: string;
+  description: string;
+  className?: string;
+}) {
+  return (
+    <div
+      role="status"
+      className={cn(
+        'flex items-start gap-3 rounded-[var(--radius-large)] border border-warning/35 bg-warning/10 px-4 py-3 text-sm',
+        className,
+      )}
+    >
+      <AlertTriangle className="mt-0.5 size-4 shrink-0 text-warning" />
+      <div className="space-y-1">
+        <p className="font-semibold text-foreground">{title}</p>
+        <p className="text-muted-foreground">{description}</p>
       </div>
     </div>
   );

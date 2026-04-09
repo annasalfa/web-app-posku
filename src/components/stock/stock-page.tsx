@@ -7,12 +7,12 @@ import {adjustStockAction} from '@/app/actions/stock';
 import {
   Button,
   DataCard,
-  FieldGroup,
-  Input,
-  PageHeader,
-  PageTransition,
-  StatusBadge,
-} from '@/components/ui';
+    FieldGroup,
+    Input,
+    PageTransition,
+    StatusBadge,
+    SurfaceNotice,
+  } from '@/components/ui';
 import {formatDateLabel} from '@/lib/format';
 import {cn} from '@/lib/utils/cn';
 
@@ -44,8 +44,13 @@ type StockPageProps = {
   initialLogs: StockLogItem[];
 };
 
-export function StockPage({initialProducts, initialLogs}: StockPageProps) {
+export function StockPage({
+  initialProducts,
+  initialLogs,
+  loadError = false,
+}: StockPageProps & {loadError?: boolean}) {
   const t = useTranslations('stock');
+  const common = useTranslations('common');
   const locale = useLocale() as 'id' | 'en';
   const [items, setItems] = useState(initialProducts);
   const [logs, setLogs] = useState(initialLogs);
@@ -89,11 +94,12 @@ export function StockPage({initialProducts, initialLogs}: StockPageProps) {
 
   return (
     <PageTransition className="space-y-6">
-      <PageHeader
-        eyebrow="Inventory"
-        title={t('title')}
-      />
-
+      {loadError ? (
+        <SurfaceNotice
+          title={common('dataUnavailableTitle')}
+          description={common('dataUnavailableDescription')}
+        />
+      ) : null}
       <div className="grid gap-4 xl:grid-cols-[0.86fr_1.14fr]">
         <DataCard title={t('products')} description={t('lowStock')}>
           <div className="space-y-3">

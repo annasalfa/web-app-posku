@@ -2,7 +2,7 @@ import 'server-only';
 
 import {ID, Query} from 'node-appwrite';
 
-import {createAdminClient} from '@/lib/server/appwrite';
+import {listAllDocuments, runInDatabaseTransaction} from '@/lib/server/database';
 import {getDatabaseEnv, hasDatabaseAppwriteEnv} from '@/lib/server/env';
 import {getProduct, listCategories, listProducts} from '@/lib/server/products';
 import {
@@ -19,13 +19,12 @@ export async function listStockOverview() {
   }
 
   const {databaseId, stockLogsCollectionId} = getDatabaseEnv();
-  const {databases} = createAdminClient();
   const [products, logs] = await Promise.all([
     listProducts(),
-    databases.listDocuments<StockLogDocument>({
+    listAllDocuments<StockLogDocument>({
       databaseId,
       collectionId: stockLogsCollectionId,
-      queries: [Query.orderDesc('$createdAt'), Query.limit(100)],
+      queries: [Query.orderDesc('$createdAt')],
     }),
   ]);
 
@@ -33,7 +32,7 @@ export async function listStockOverview() {
 
   return {
     products,
-    logs: logs.documents.map((document) =>
+    logs: logs.map((document) =>
       mapStockLogDocument(document, productMap.get(document.productId) ?? document.productId),
     ),
   };
@@ -45,7 +44,6 @@ export async function adjustStock(input: AdjustStockInput) {
   }
 
   const {databaseId, productsCollectionId, stockLogsCollectionId} = getDatabaseEnv();
-  const {databases} = createAdminClient();
   const product = await getProduct(input.productId);
   const reason = input.reason.trim();
 
@@ -60,28 +58,35 @@ export async function adjustStock(input: AdjustStockInput) {
     throw new Error('STOCK_RESULT_NEGATIVE');
   }
 
-  const updatedProduct = await databases.updateDocument<ProductDocument>({
-    databaseId,
-    collectionId: productsCollectionId,
-    documentId: product.$id,
-    data: {
-      stockQty: nextStockQty,
-    },
+  const {product: updatedProduct, stockLog} = await runInDatabaseTransaction(async ({databases, transactionId}) => {
+    const updatedProduct = await databases.updateDocument<ProductDocument>({
+      databaseId,
+      collectionId: productsCollectionId,
+      documentId: product.$id,
+      data: {
+        stockQty: nextStockQty,
+      },
+      transactionId,
+    });
+
+    const stockLog = await databases.createDocument<StockLogDocument>({
+      databaseId,
+      collectionId: stockLogsCollectionId,
+      documentId: ID.unique(),
+      data: {
+        productId: product.$id,
+        changeQty: delta,
+        stockBefore: product.stockQty,
+        stockAfter: nextStockQty,
+        reason,
+        transactionId: null,
+      },
+      transactionId,
+    });
+
+    return {product: updatedProduct, stockLog};
   });
 
-  const stockLog = await databases.createDocument<StockLogDocument>({
-    databaseId,
-    collectionId: stockLogsCollectionId,
-    documentId: ID.unique(),
-    data: {
-      productId: product.$id,
-      changeQty: delta,
-      stockBefore: product.stockQty,
-      stockAfter: nextStockQty,
-      reason,
-      transactionId: null,
-    },
-  });
   const categories = await listCategories();
   const categoryMap = new Map(categories.map((category) => [category.$id, category.name]));
 

@@ -27,6 +27,7 @@ export type TransactionDocument = Models.Document & {
 export type TransactionItemDocument = Models.Document & {
   transactionId: string;
   productId: string;
+  productNameSnapshot?: string;
   quantity: number;
   unitPrice: number;
   subtotal: number;
@@ -170,7 +171,7 @@ export function mapStockLogDocument(document: StockLogDocument, productName: str
 export function mapTransactionItemDocument(document: TransactionItemDocument, productName: string): TransactionItemRecord {
   return {
     productId: document.productId,
-    name: productName,
+    name: document.productNameSnapshot ?? productName,
     quantity: document.quantity,
     unitPrice: document.unitPrice,
     subtotal: document.subtotal,

@@ -2,6 +2,7 @@ import {redirect} from 'next/navigation';
 
 import {DashboardPage} from '@/components/dashboard/dashboard-page';
 import {getCurrentUser} from '@/lib/server/auth';
+import {readWithFallback} from '@/lib/server/database';
 import {getDashboardMetrics} from '@/lib/server/sales';
 
 export default async function HomePage({
@@ -16,7 +17,23 @@ export default async function HomePage({
     redirect(`/${locale}/login`);
   }
 
-  const metrics = await getDashboardMetrics();
+  const metricsResult = await readWithFallback({
+    label: 'dashboard-metrics',
+    fallback: {
+      revenueToday: 0,
+      ordersToday: 0,
+      averageTicket: 0,
+      lowStockCount: 0,
+      topProducts: [],
+      lowStockProducts: [],
+    },
+    read: () => getDashboardMetrics(),
+  });
 
-  return <DashboardPage initialMetrics={metrics} />;
+  return (
+    <DashboardPage
+      initialMetrics={metricsResult.data}
+      loadError={metricsResult.error}
+    />
+  );
 }

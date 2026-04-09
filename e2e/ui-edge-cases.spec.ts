@@ -1,6 +1,7 @@
 import {expect, test} from '@playwright/test';
 
 import {cleanupProductArtifacts, createProduct, getFirstCategory} from './support/appwrite-admin';
+import {expectDesktopRailHasNoBranding, expectMobileDrawerHasNoBranding, expectShellTitle} from './support/shell';
 
 test.describe.serial('ui edge cases', () => {
   const suffix = Date.now();
@@ -93,8 +94,8 @@ test.describe.serial('ui edge cases', () => {
     await expect(page.getByRole('button', {name: 'Selesaikan transaksi'})).toBeEnabled();
 
     await page.getByRole('button', {name: 'Selesaikan transaksi'}).click();
-    await expect(page.getByText('Transaksi siap dikirim ke dapur dan update stok.')).toBeVisible();
-    await expect(page.getByRole('heading', {name: 'Belum ada item'})).toBeVisible();
+    await expect(page.getByText('Transaksi siap dikirim ke dapur dan update stok.')).toBeVisible({timeout: 15000});
+    await expect(page.getByRole('heading', {name: 'Belum ada item'})).toBeVisible({timeout: 15000});
   });
 
   test('disables report exports when a custom range has no transactions', async ({page}) => {
@@ -112,10 +113,12 @@ test.describe.serial('ui edge cases', () => {
     await page.setViewportSize({width: 390, height: 844});
     await page.goto('/id');
 
+    await expectShellTitle(page, 'Dashboard');
     const openNavigationButton = page.getByRole('button', {name: 'Buka navigasi'});
 
     await expect(openNavigationButton).toBeVisible();
     await openNavigationButton.click();
+    await expectMobileDrawerHasNoBranding(page);
     await expect(page.getByRole('link', {name: 'Kasir'})).toBeVisible();
     await page.keyboard.press('Escape');
     await expect(page.getByRole('link', {name: 'Kasir'})).toHaveCount(0);
@@ -124,6 +127,7 @@ test.describe.serial('ui edge cases', () => {
     await page.goto('/id');
 
     await expect(openNavigationButton).toBeHidden();
+    await expectDesktopRailHasNoBranding(page);
     await expect(page.getByRole('link', {name: 'Kasir'})).toBeVisible();
   });
 

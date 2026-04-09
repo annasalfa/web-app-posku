@@ -126,3 +126,20 @@ Set locally and do not commit:
 USER_EMAIL="<set-in-local-env>"
 USER_PASS="<set-in-local-env>"
 ```
+
+---
+
+## Always read and update this files
+
+- PRD.md: semua tentang proyek ini
+- STATE.md: save state untuk berbagi memory dan menjaga memory jika session terputus
+- PROGRES_TRACK.md: untuk melacak perubahan versi dan membantu commit
+- DESIGN.md: design system yang telah diterapkan pada 'main' branch pada proyek/repo ini
+- POS_DESIGN.md: design system yang telah diterapkan pada 'feat/new-ui-ux' branch pada proyek/repo ini
+- DEPLOYMENT.md: semua tentang bagaimana tata cara deployment untuk proyek/repo ini
+
+### Mandatory protocol
+
+1. **Initialize**: Setiap kali session dimulai atau task baru diterima, gunakan tool 'read_file' untuk membuka file diatas secara berurutan
+2. **Context First**: Dilarang memberikan saran kode atau solusi sebelum memahami isi 'STATE.md' dan 'PRD.md'
+3. **Double Check**: Jika ada perubahan pada proyek/repo ini pastika perbarui segera 'STATE.md' setelah tugas selesai

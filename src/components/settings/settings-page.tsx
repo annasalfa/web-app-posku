@@ -5,7 +5,7 @@ import {useLocale, useTranslations} from 'next-intl';
 import {useTheme} from 'next-themes';
 
 import {logoutAction} from '@/app/actions/auth';
-import {Button, DataCard, PageHeader, PageTransition, SegmentedControl, StatusBadge} from '@/components/ui';
+import {Button, DataCard, PageTransition, SegmentedControl, StatusBadge} from '@/components/ui';
 import {usePathname, useRouter} from '@/i18n/navigation';
 import {createBrowserClient} from '@/lib/appwrite/client';
 import {useMounted} from '@/lib/utils/use-online-status';
@@ -36,11 +36,6 @@ export function SettingsPage() {
 
   return (
     <PageTransition className="space-y-6">
-      <PageHeader
-        eyebrow="Preferences"
-        title={t('title')}
-      />
-
       <div className="grid gap-4 lg:grid-cols-2">
         <DataCard title={common('theme')} description={t('appearance')}>
           <SegmentedControl

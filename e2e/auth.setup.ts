@@ -2,6 +2,8 @@ import fs from 'node:fs';
 
 import {expect, test as setup} from '@playwright/test';
 
+import {expectShellTitle} from './support/shell';
+
 const authFile = `${process.cwd()}/playwright/.auth/user.json`;
 
 function getRequiredEnv(name: 'USER_EMAIL' | 'USER_PASS') {
@@ -23,6 +25,10 @@ setup('authenticate', async ({page}) => {
   await page.getByRole('button', {name: 'Masuk'}).click();
 
   await page.waitForURL('/id');
-  await expect(page.locator('#main-content').getByRole('heading', {name: 'Dashboard'})).toBeVisible();
+  await expectShellTitle(page, 'Dashboard');
+  await Promise.race([
+    page.getByText('Revenue hari ini').waitFor({state: 'visible', timeout: 15000}),
+    page.getByText('Data sedang tidak tersedia').waitFor({state: 'visible', timeout: 15000}),
+  ]);
   await page.context().storageState({path: authFile});
 });

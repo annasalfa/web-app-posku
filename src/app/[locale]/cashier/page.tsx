@@ -2,6 +2,7 @@ import {redirect} from 'next/navigation';
 
 import {CashierPage} from '@/components/cashier/cashier-page';
 import {getCurrentUser} from '@/lib/server/auth';
+import {readWithFallback} from '@/lib/server/database';
 import {listProducts} from '@/lib/server/products';
 
 export default async function CashierRoute({
@@ -16,8 +17,18 @@ export default async function CashierRoute({
     redirect(`/${locale}/login`);
   }
 
-  const products = await listProducts({activeOnly: true});
-  const categories = Array.from(new Set(products.map((product) => product.categoryName))).filter(Boolean);
+  const productsResult = await readWithFallback({
+    label: 'cashier-products',
+    fallback: [],
+    read: () => listProducts({activeOnly: true}),
+  });
+  const categories = Array.from(new Set(productsResult.data.map((product) => product.categoryName))).filter(Boolean);
 
-  return <CashierPage initialProducts={products} initialCategories={categories} />;
+  return (
+    <CashierPage
+      initialProducts={productsResult.data}
+      initialCategories={categories}
+      loadError={productsResult.error}
+    />
+  );
 }

@@ -2,6 +2,7 @@ import {redirect} from 'next/navigation';
 
 import {StockPage} from '@/components/stock/stock-page';
 import {getCurrentUser} from '@/lib/server/auth';
+import {readWithFallback} from '@/lib/server/database';
 import {listStockOverview} from '@/lib/server/stock';
 
 export default async function StockRoute({
@@ -16,7 +17,17 @@ export default async function StockRoute({
     redirect(`/${locale}/login`);
   }
 
-  const overview = await listStockOverview();
+  const overviewResult = await readWithFallback({
+    label: 'stock-overview',
+    fallback: {products: [], logs: []},
+    read: () => listStockOverview(),
+  });
 
-  return <StockPage initialProducts={overview.products} initialLogs={overview.logs} />;
+  return (
+    <StockPage
+      initialProducts={overviewResult.data.products}
+      initialLogs={overviewResult.data.logs}
+      loadError={overviewResult.error}
+    />
+  );
 }

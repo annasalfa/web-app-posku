@@ -41,7 +41,9 @@
     "paymentQris": "QRIS",
     "active": "Active",
     "inactive": "Inactive",
-    "outOfStock": "Out of stock"
+    "outOfStock": "Out of stock",
+    "dataUnavailableTitle": "Data is temporarily unavailable",
+    "dataUnavailableDescription": "The page is still rendered with a fallback state. Try refreshing again in a moment."
   },
   "shell": {
     "brandTitle": "POSKU",
@@ -131,7 +133,11 @@
     "price": "Price",
     "category": "Category",
     "stockCount": "stock",
-    "empty": "No matching products found."
+    "empty": "No matching products found.",
+    "nameRequired": "Product name is required.",
+    "priceInvalid": "Product price is invalid.",
+    "stockInvalid": "Opening stock is invalid.",
+    "saveFailed": "Product could not be saved right now. Please try again."
   },
   "stock": {
     "title": "Stock",

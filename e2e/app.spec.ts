@@ -1,9 +1,11 @@
 import {expect, test} from '@playwright/test';
 
+import {expectShellTitle} from './support/shell';
+
 test('loads dashboard with authenticated session', async ({page}) => {
   await page.goto('/id');
 
-  await expect(page.locator('#main-content').getByRole('heading', {name: 'Dashboard'})).toBeVisible();
+  await expectShellTitle(page, 'Dashboard');
   await expect(page.getByText('Revenue hari ini')).toBeVisible();
 });
 
@@ -12,7 +14,7 @@ test('navigates to cashier and renders checkout controls', async ({page}) => {
   await page.getByRole('link', {name: 'Kasir'}).click();
 
   await expect(page).toHaveURL(/\/id\/cashier$/);
-  await expect(page.locator('#main-content').getByRole('heading', {name: 'Kasir'})).toBeVisible();
+  await expectShellTitle(page, 'Kasir');
   await expect(page.getByRole('group', {name: 'Filter kategori'})).toBeVisible();
   await expect(page.getByRole('group', {name: 'Metode bayar'})).toBeVisible();
   await expect(page.getByRole('button', {name: 'Selesaikan transaksi'})).toBeVisible();
@@ -37,7 +39,7 @@ test.describe('logout flow', () => {
     await expect(page).toHaveURL(/\/id$/);
     await page.goto('/id/settings');
 
-    await expect(page.locator('#main-content').getByRole('heading', {name: 'Pengaturan'})).toBeVisible();
+    await expectShellTitle(page, 'Pengaturan');
     await page.getByRole('button', {name: 'Keluar'}).click();
 
     await expect(page).toHaveURL(/\/id\/login$/);

@@ -17,17 +17,17 @@ import {
   EmptyState,
   FieldGroup,
   Input,
-  PageHeader,
   PageTransition,
-  SearchField,
-  SegmentedControl,
-  Select,
+    SearchField,
+    SegmentedControl,
+    Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
-  SelectValue,
-  StatusBadge,
-} from '@/components/ui';
+    SelectValue,
+    StatusBadge,
+    SurfaceNotice,
+  } from '@/components/ui';
 import {formatCurrency} from '@/lib/format';
 
 type ProductItem = {
@@ -60,7 +60,11 @@ type ProductsPageProps = {
   initialCategories: CategoryItem[];
 };
 
-export function ProductsPage({initialProducts, initialCategories}: ProductsPageProps) {
+export function ProductsPage({
+  initialProducts,
+  initialCategories,
+  loadError = false,
+}: ProductsPageProps & {loadError?: boolean}) {
   const t = useTranslations('products');
   const common = useTranslations('common');
   const locale = useLocale() as 'id' | 'en';
@@ -104,6 +108,12 @@ export function ProductsPage({initialProducts, initialCategories}: ProductsPageP
 
   function saveDraft() {
     setMessage('');
+    const validationError = validateProductDraft(draft, t);
+
+    if (validationError) {
+      setMessage(validationError);
+      return;
+    }
 
     startTransition(async () => {
       try {
@@ -122,33 +132,36 @@ export function ProductsPage({initialProducts, initialCategories}: ProductsPageP
         });
         setOpen(false);
       } catch (error) {
-        setMessage(error instanceof Error ? error.message : 'Unable to save product.');
+        setMessage(resolveProductSaveMessage(error, t));
       }
     });
   }
 
   return (
     <PageTransition className="space-y-6">
-      <PageHeader
-        eyebrow="Catalog"
-        title={t('title')}
-        action={
-          <Button onClick={openCreate}>
-            <PackagePlus className="size-4" />
-            {t('new')}
-          </Button>
-        }
-      />
-
+      {loadError ? (
+        <SurfaceNotice
+          title={common('dataUnavailableTitle')}
+          description={common('dataUnavailableDescription')}
+        />
+      ) : null}
       <DataCard>
         <div className="space-y-4">
-          <SearchField
-            id={searchId}
-            label={common('search')}
-            value={query}
-            placeholder={common('search')}
-            onChange={setQuery}
-          />
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+            <div className="min-w-0 flex-1">
+              <SearchField
+                id={searchId}
+                label={common('search')}
+                value={query}
+                placeholder={common('search')}
+                onChange={setQuery}
+              />
+            </div>
+            <Button onClick={openCreate} className="sm:shrink-0">
+              <PackagePlus className="size-4" />
+              {t('new')}
+            </Button>
+          </div>
 
           {filtered.length === 0 ? (
             <EmptyState title={t('title')} description={t('empty')} className="min-h-52" />
@@ -273,4 +286,46 @@ function createEmptyDraft(categories: CategoryItem[]): ProductDraft {
     isActive: true,
     categoryId: categories[0]?.id ?? null,
   };
+}
+
+function validateProductDraft(
+  draft: ProductDraft,
+  t: ReturnType<typeof useTranslations<'products'>>,
+) {
+  if (!draft.name.trim()) {
+    return t('nameRequired');
+  }
+
+  if (!Number.isFinite(draft.price) || draft.price < 0) {
+    return t('priceInvalid');
+  }
+
+  if (!Number.isInteger(draft.stockQty) || draft.stockQty < 0) {
+    return t('stockInvalid');
+  }
+
+  return '';
+}
+
+function resolveProductSaveMessage(
+  error: unknown,
+  t: ReturnType<typeof useTranslations<'products'>>,
+) {
+  if (!(error instanceof Error)) {
+    return t('saveFailed');
+  }
+
+  if (error.message === 'PRODUCT_NAME_REQUIRED') {
+    return t('nameRequired');
+  }
+
+  if (error.message === 'PRODUCT_PRICE_INVALID') {
+    return t('priceInvalid');
+  }
+
+  if (error.message === 'PRODUCT_STOCK_INVALID') {
+    return t('stockInvalid');
+  }
+
+  return t('saveFailed');
 }
