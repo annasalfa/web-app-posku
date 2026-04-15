@@ -5,7 +5,6 @@
     "history": "History",
     "reports": "Reports",
     "products": "Products",
-    "stock": "Stock",
     "settings": "Settings"
   },
   "common": {
@@ -41,7 +40,6 @@
     "paymentQris": "QRIS",
     "active": "Active",
     "inactive": "Inactive",
-    "outOfStock": "Out of stock",
     "dataUnavailableTitle": "Data is temporarily unavailable",
     "dataUnavailableDescription": "The page is still rendered with a fallback state. Try refreshing again in a moment."
   },
@@ -49,12 +47,14 @@
     "brandTitle": "POSKU",
     "skipToContent": "Skip to main content",
     "openNavigation": "Open navigation",
-    "closeNavigation": "Close navigation"
+    "closeNavigation": "Close navigation",
+    "navigationTitle": "Main navigation",
+    "navigationDescription": "Choose the POSKU page to open."
   },
   "auth": {
     "heroEyebrow": "POSKU / tablet counter interface",
     "heroTitle": "Fast checkout for one outlet.",
-    "heroDescription": "Sales, stock, and reports in one place.",
+    "heroDescription": "Sales, products, and reports in one place.",
     "accessEyebrow": "Owner access",
     "title": "Sign in",
     "subtitle": "Use your owner account.",
@@ -69,13 +69,9 @@
     "revenue": "Revenue today",
     "orders": "Orders",
     "averageTicket": "Average ticket",
-    "criticalStock": "Critical stock",
     "topProducts": "Top Products",
-    "lowStock": "Low Stock",
     "soldSuffix": "sold",
-    "leftSuffix": "left",
-    "noSales": "No sales yet to rank.",
-    "noCriticalStock": "All current stock levels are healthy."
+    "noSales": "No sales yet to rank."
   },
   "cashier": {
     "title": "Cashier",
@@ -94,9 +90,8 @@
     "change": "Change",
     "total": "Total",
     "send": "Complete transaction",
-    "submitted": "Transaction staged for kitchen and stock update.",
-    "disabled": "Checkout unavailable while offline",
-    "stockUnit": "stock"
+    "submitted": "Transaction saved successfully.",
+    "disabled": "Checkout unavailable while offline"
   },
   "history": {
     "title": "History",
@@ -129,24 +124,12 @@
     "title": "Products",
     "new": "New product",
     "name": "Name",
-    "stock": "Opening stock",
     "price": "Price",
     "category": "Category",
-    "stockCount": "stock",
     "empty": "No matching products found.",
     "nameRequired": "Product name is required.",
     "priceInvalid": "Product price is invalid.",
-    "stockInvalid": "Opening stock is invalid.",
     "saveFailed": "Product could not be saved right now. Please try again."
-  },
-  "stock": {
-    "title": "Stock",
-    "lowStock": "Low Stock",
-    "products": "Products",
-    "adjust": "Adjust stock",
-    "reason": "Reason",
-    "delta": "Delta",
-    "auditTrail": "Audit trail"
   },
   "settings": {
     "title": "Settings",
@@ -157,8 +140,8 @@
     "frontendReadiness": "Frontend readiness",
     "configured": "Configured",
     "missingEnv": "Missing env",
-    "realtimeChannel": "Realtime stock channel",
-    "readyToSubscribe": "Ready to subscribe",
+    "sessionStatus": "Browser session status",
+    "ready": "Ready",
     "standby": "Standby",
     "signOut": "Sign out",
     "signingOut": "Signing out..."

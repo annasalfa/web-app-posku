@@ -29,14 +29,13 @@ type ProductItem = {
   id: string;
   name: string;
   price: number;
-  stockQty: number;
   isActive: boolean;
   categoryId: string | null;
   categoryName: string;
   sku: string;
 };
 
-type CartItem = {productId: string; name: string; quantity: number; unitPrice: number; stockQty: number};
+type CartItem = {productId: string; name: string; quantity: number; unitPrice: number};
 
 type CashierPageProps = {
   initialProducts: ProductItem[];
@@ -81,17 +80,14 @@ export function CashierPage({
 
   function addToCart(productId: string) {
     const product = menuItems.find((entry) => entry.id === productId);
-    if (!product || product.stockQty <= 0) return;
+    if (!product) return;
 
     setSubmitted(false);
     setMessage('');
     setCart((current) => {
       const existing = current.find((item) => item.productId === productId);
       if (!existing) {
-        return [...current, {productId, name: product.name, quantity: 1, unitPrice: product.price, stockQty: product.stockQty}];
-      }
-      if (existing.quantity >= product.stockQty) {
-        return current;
+        return [...current, {productId, name: product.name, quantity: 1, unitPrice: product.price}];
       }
       return current.map((item) =>
         item.productId === productId ? {...item, quantity: item.quantity + 1} : item,
@@ -107,7 +103,7 @@ export function CashierPage({
           item.productId === productId
             ? {
                 ...item,
-                quantity: Math.max(0, Math.min(item.quantity + delta, item.stockQty)),
+                quantity: Math.max(0, item.quantity + delta),
               }
             : item,
         )
@@ -130,12 +126,6 @@ export function CashierPage({
           amountPaid: paymentMethod === 'cash' ? amountReceived : undefined,
         });
 
-        setMenuItems((current) =>
-          current.map((product) => {
-            const line = cart.find((item) => item.productId === product.id);
-            return line ? {...product, stockQty: Math.max(product.stockQty - line.quantity, 0)} : product;
-          }),
-        );
         setSubmitted(true);
         setCart([]);
         setReceived('0');
@@ -157,7 +147,7 @@ export function CashierPage({
           description={common('dataUnavailableDescription')}
         />
       ) : null}
-      <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_26rem]">
+      <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(21rem,22rem)] 2xl:grid-cols-[minmax(0,1fr)_24rem]">
         <div className="space-y-4">
           <DataCard className="surface-grid">
             <div className="grid gap-3 xl:grid-cols-[minmax(0,1fr)_minmax(24rem,auto)]">
@@ -176,6 +166,7 @@ export function CashierPage({
                   value={category}
                   onChange={setCategory}
                   ariaLabel={t('categoryFilter')}
+                  size="sm"
                   options={[{label: t('all'), value: 'all'}, ...initialCategories.map((item) => ({label: item, value: item}))]}
                 />
               </div>
@@ -185,30 +176,21 @@ export function CashierPage({
           {filteredProducts.length === 0 ? (
             <EmptyState title={t('noResultsTitle')} description={t('noResults')} className="min-h-72" />
           ) : (
-            <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
+            <div className="grid gap-3 sm:grid-cols-2 2xl:grid-cols-3">
               {filteredProducts.map((product) => {
-                const isLow = product.stockQty <= 5;
-                const isOutOfStock = product.stockQty <= 0;
-
                 return (
                   <button
                     key={product.id}
                     type="button"
-                    disabled={isOutOfStock}
-                    aria-disabled={isOutOfStock}
                     onClick={() => addToCart(product.id)}
-                    className={cn(
-                      'group flex min-h-52 flex-col justify-between rounded-[var(--radius-large)] border p-4 text-left shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/60 focus-visible:ring-offset-2',
-                      isOutOfStock
-                        ? 'cursor-not-allowed border-border bg-muted/35 opacity-70'
-                        : 'border-border bg-card hover:border-primary/30 hover:bg-primary/5',
-                    )}
+                    className="group flex min-h-52 flex-col justify-between rounded-[var(--radius-large)] border border-border bg-card p-4 text-left shadow-sm transition-colors hover:border-primary/30 hover:bg-primary/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/60 focus-visible:ring-offset-2"
                   >
                     <div className="space-y-4">
                       <div className="flex flex-wrap gap-2">
                         <StatusBadge tone="neutral">{product.categoryName}</StatusBadge>
-                        {isOutOfStock ? <StatusBadge tone="danger">{common('outOfStock')}</StatusBadge> : null}
-                        {!isOutOfStock && isLow ? <StatusBadge tone="warning">{product.stockQty} {t('stockUnit')}</StatusBadge> : null}
+                        <StatusBadge tone={product.isActive ? 'success' : 'neutral'}>
+                          {product.isActive ? common('active') : common('inactive')}
+                        </StatusBadge>
                       </div>
                       <div className="space-y-2">
                         <p className="line-clamp-2 text-xl font-bold tracking-[-0.03em]">{product.name}</p>
@@ -221,9 +203,7 @@ export function CashierPage({
                       <p className="font-mono text-2xl font-bold tracking-[-0.03em]">
                         {formatCurrency(product.price, locale)}
                       </p>
-                      <p className="text-sm text-muted-foreground">
-                        {product.stockQty} {t('stockUnit')}
-                      </p>
+                      <p className="text-sm text-muted-foreground">{product.categoryName}</p>
                     </div>
                   </button>
                 );
@@ -234,7 +214,7 @@ export function CashierPage({
 
         <DataCard
           title={t('cart')}
-          className="xl:sticky xl:top-24 xl:h-fit"
+          className="lg:sticky lg:top-24 lg:h-fit"
         >
           <div className="space-y-5">
             <div className="rounded-[var(--radius-large)] border border-border bg-muted/35 px-4 py-3">
@@ -324,16 +304,26 @@ export function CashierPage({
                 </StatusBadge>
               </div>
 
-              <SegmentedControl
-                value={paymentMethod}
-                onChange={(value) => setPaymentMethod(value as PaymentMethod)}
-                ariaLabel={t('payment')}
-                options={[
-                  {label: t('cash'), value: 'cash'},
-                  {label: t('transfer'), value: 'transfer'},
-                  {label: t('qris'), value: 'qris'},
-                ]}
-              />
+              <div className="grid grid-cols-3 gap-2" role="radiogroup" aria-label={t('payment')}>
+                <PaymentMethodButton
+                  label={t('cash')}
+                  value="cash"
+                  selected={paymentMethod === 'cash'}
+                  onSelect={setPaymentMethod}
+                />
+                <PaymentMethodButton
+                  label={common('paymentTransfer')}
+                  value="transfer"
+                  selected={paymentMethod === 'transfer'}
+                  onSelect={setPaymentMethod}
+                />
+                <PaymentMethodButton
+                  label={t('qris')}
+                  value="qris"
+                  selected={paymentMethod === 'qris'}
+                  onSelect={setPaymentMethod}
+                />
+              </div>
 
               {paymentMethod === 'cash' ? (
                 <FieldGroup label={t('received')} htmlFor={receivedId}>
@@ -386,5 +376,34 @@ export function CashierPage({
         </DataCard>
       </div>
     </PageTransition>
+  );
+}
+
+function PaymentMethodButton({
+  label,
+  value,
+  selected,
+  onSelect,
+}: {
+  label: string;
+  value: PaymentMethod;
+  selected: boolean;
+  onSelect: (value: PaymentMethod) => void;
+}) {
+  return (
+    <button
+      type="button"
+      role="radio"
+      aria-checked={selected}
+      onClick={() => onSelect(value)}
+      className={cn(
+        'flex min-h-14 items-center justify-center rounded-[var(--radius-standard)] border px-3 py-3 text-center text-[13px] font-semibold leading-tight transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/60 focus-visible:ring-offset-2',
+        selected
+          ? 'border-primary bg-primary text-primary-foreground shadow-sm'
+          : 'border-border bg-card text-foreground hover:bg-muted/70',
+      )}
+    >
+      <span className="block whitespace-normal break-words">{label}</span>
+    </button>
   );
 }

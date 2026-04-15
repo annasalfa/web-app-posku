@@ -11,7 +11,6 @@ export type CategoryDocument = Models.Document & {
 export type ProductDocument = Models.Document & {
   name: string;
   price: number;
-  stockQty: number;
   categoryId?: string | null;
   isActive: boolean;
 };
@@ -57,68 +56,29 @@ export type DashboardTopProductRecord = {
   sold: number;
 };
 
-export type DashboardLowStockRecord = {
-  id: string;
-  name: string;
-  category: string;
-  stockQty: number;
-};
-
 export type DashboardMetricsRecord = {
   revenueToday: number;
   ordersToday: number;
   averageTicket: number;
-  lowStockCount: number;
   topProducts: DashboardTopProductRecord[];
-  lowStockProducts: DashboardLowStockRecord[];
-};
-
-export type StockLogDocument = Models.Document & {
-  productId: string;
-  changeQty: number;
-  stockBefore: number;
-  stockAfter: number;
-  reason: string;
-  transactionId?: string | null;
 };
 
 export type ProductRecord = {
   id: string;
   name: string;
   price: number;
-  stockQty: number;
   isActive: boolean;
   categoryId: string | null;
   categoryName: string;
   sku: string;
 };
 
-export type StockLogRecord = {
-  id: string;
-  productId: string;
-  productName: string;
-  changeQty: number;
-  stockBefore: number;
-  stockAfter: number;
-  reason: string;
-  createdAt: string;
-  transactionId: string | null;
-};
-
 export type SaveProductInput = {
   id?: string;
   name: string;
   price: number;
-  stockQty: number;
   categoryId?: string | null;
   isActive?: boolean;
-};
-
-export type AdjustStockInput = {
-  productId: string;
-  reason: string;
-  delta?: number;
-  nextStockQty?: number;
 };
 
 export type CheckoutItemInput = {
@@ -146,25 +106,10 @@ export function mapProductDocument(document: ProductDocument, categories: Map<st
     id: document.$id,
     name: document.name,
     price: document.price,
-    stockQty: document.stockQty,
     isActive: document.isActive,
     categoryId: document.categoryId ?? null,
     categoryName: normalizeCategoryName(document.categoryId, categories),
     sku: document.$id,
-  };
-}
-
-export function mapStockLogDocument(document: StockLogDocument, productName: string): StockLogRecord {
-  return {
-    id: document.$id,
-    productId: document.productId,
-    productName,
-    changeQty: document.changeQty,
-    stockBefore: document.stockBefore,
-    stockAfter: document.stockAfter,
-    reason: document.reason,
-    createdAt: document.$createdAt,
-    transactionId: document.transactionId ?? null,
   };
 }
 

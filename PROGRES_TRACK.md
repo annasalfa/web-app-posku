@@ -24,7 +24,6 @@
 - [x] Refactor history.
 - [x] Refactor reports.
 - [x] Refactor products.
-- [x] Refactor stock.
 - [x] Refactor settings.
 - [x] Lint, typecheck, build, dan verification final lokal.
 - [x] Rapikan repo untuk deployment: `.env.example`, smoke test command, dan sanitasi secret repo.
@@ -35,11 +34,17 @@
 - [x] Cashier memakai layout split dengan sticky cart.
 - [x] Products memakai dialog dan select berbasis foundation baru.
 - [x] Reports memakai table dan export actions tetap aktif.
-- [x] Stock memakai dua-zona inventory + audit trail.
 - [x] Settings memakai segmented controls untuk theme dan locale.
 - [x] History memakai list/detail layout yang stabil.
+- [x] Compact tablet pass diterapkan pada shell, history, dan segmented controls agar aman di breakpoint tablet sempit.
+- [x] Sidebar shell kini auto-hide di bawah `xl`, sehingga tablet dan mobile memakai drawer navigation yang sama.
+- [x] Drawer navigation shell kini punya title dan description tersembunyi untuk memenuhi aksesibilitas Radix dialog tanpa mengubah tampilan visual.
+- [x] Drawer navigation shell kini punya spacer atas khusus agar tombol close tidak overlap dengan item navigasi pertama.
+- [x] Layout `Kasir` kini memunculkan `Pesanan aktif` sebagai kolom kanan lebih cepat pada breakpoint tablet landscape.
+- [x] Bagian `Metode bayar` di `Kasir` kini memakai grid 3 tombol khusus agar label metode bayar lebih rapi pada kolom cart yang sempit.
+- [x] Fitur manajemen stok dihapus end-to-end; produk kini hanya memakai status aktif/nonaktif dan route `/stock` sudah dihapus.
 - [x] Dokumen status dan PRD menampilkan route map, struktur `src/`, scripts, i18n, dan suite test yang benar-benar ada di repo.
-- [x] Catatan struktur sekarang mengakui folder legacy kosong: `src/components/shared/`, `src/lib/data/`, dan `public/`.
+- [x] Catatan struktur sekarang mengakui folder legacy kosong: `src/components/shared/` dan `src/lib/data/`, serta asset runtime di `public/`.
 
 ## Validation Checklist
 - [x] `npm run lint`
@@ -51,9 +56,10 @@
 - [x] `TestSprite` frontend run selesai dan menghasilkan artefak `testsprite_tests/`
 - [x] Verifikasi wrapping nama produk panjang dan transaction ID
 - [x] Verifikasi breakpoint mobile/tablet/desktop
-- [x] Verifikasi cashier: add item, qty, out of stock, cash, transfer, QRIS, total, change, submit
+- [x] Verifikasi cashier: add item, qty, produk nonaktif tersembunyi, cash, transfer, QRIS, total, change, submit
 - [x] Verifikasi snapshot struktur repo terhadap file aktual dengan `src/app`, `src/components`, `src/lib`, `messages`, `scripts`, dan `e2e`
-- [x] Triage failure TestSprite prioritas tinggi: checkout submit, product save/create, dan positive stock adjustment
+- [x] Triage failure TestSprite prioritas tinggi: checkout submit, product save/create, dan sinkronisasi flow prioritas tinggi
+- [x] Manual browser smoke pass lokal tervalidasi untuk login, shell drawer, cashier, products, history, reports, dan settings
 - [ ] Verifikasi manual light/dark di device target produksi
 - [ ] Verifikasi manual locale `id/en` di device target produksi
 - [ ] Verifikasi manual offline state di device target produksi
@@ -82,12 +88,21 @@
 - Batch 7: `docs(state): sync project docs with current repository structure`
 - Batch 8: `fix(appwrite): add transactional writes, read fallbacks, and history snapshots`
 - Batch 9: `fix(products): guard empty-name saves and sync post-deploy status`
+- Batch 10: `fix(ui): compact tablet layout for history and shared controls`
+- Batch 11: `fix(shell): auto-hide sidebar on tablet and mobile`
+- Batch 12: `fix(a11y): add hidden title for shell drawer`
+- Batch 13: `fix(shell): prevent drawer close overlap`
+- Batch 14: `fix(cashier): promote cart panel for tablet layout`
+- Batch 15: `fix(cashier): refine payment method selector`
+- Batch 16: `refactor(domain): remove stock management end-to-end`
+- Batch 17: `fix(testing): restore full suite after stock-removal regressions`
+- Batch 18: `fix(ui): resolve drawer a11y and favicon runtime issues`
 
 ## Latest Hardening Work
 - [x] Tambah helper Appwrite server untuk pagination internal, retry transient read, dan transaksi database native.
-- [x] Dashboard/cashier/history/products/reports/stock kini punya fallback state saat read Appwrite gagal, bukan crash route.
+- [x] Dashboard/cashier/history/products/reports kini punya fallback state saat read Appwrite gagal, bukan crash route.
 - [x] `settings` kini memverifikasi auth valid di server dan tidak lagi bergantung hanya pada cookie presence di middleware.
-- [x] Checkout dan stock adjustment kini memakai Appwrite database transaction untuk menjaga konsistensi multi-dokumen.
+- [x] Checkout kini memakai Appwrite database transaction untuk menjaga konsistensi multi-dokumen.
 - [x] `transaction_items` kini menyimpan `productNameSnapshot` untuk menjaga akurasi histori saat nama produk berubah.
 - [x] Provisioning database diperketat: permission koleksi bisnis tidak lagi memberi CRUD langsung ke user session browser.
 - [x] Tambah script migrasi/backfill: `npm run appwrite:migrate-db`.
@@ -95,6 +110,10 @@
 - [x] `npm run lint`, `npm run build`, dan `npx tsc --noEmit` lolos setelah perubahan hardening ini.
 - [x] `npm run appwrite:migrate-db` sudah dijalankan pada environment Appwrite target (`Backfilled productNameSnapshot on 0 transaction items.`).
 - [x] Rerun targeted Playwright production suites untuk flow prioritas tinggi TestSprite (`backoffice-interactions` dan `ui-edge-cases`).
+- [x] Verifikasi pasca-refactor stok kini kembali hijau untuk lint, build, typecheck, public smoke (`npm test`), dan full Playwright suite.
+- [x] Verifikasi browser interaktif lokal via MCP fallback (`playwright`) selesai setelah `chrome-devtools` MCP gagal attach ke X server sesi ini.
+- [x] Tambahkan `SheetDescription` pada drawer shell untuk menghilangkan warning Radix `DialogContent`.
+- [x] Tambahkan favicon agar console dev tidak lagi menghasilkan `GET /favicon.ico 404`.
 
 ## Latest TestSprite Run
 - [x] Build production lokal dijalankan sebelum TestSprite.
@@ -108,10 +127,10 @@
 - [x] Tambah guard client-side untuk nama produk kosong agar tidak lagi memunculkan generic Server Components production error pada path validasi.
 
 ## Snapshot Struktur Saat Ini
-- App Router lokalized ada di `src/app/[locale]` dengan route: `login`, `dashboard`, `cashier`, `history`, `products`, `reports`, `settings`, dan `stock`.
-- Server actions aktif ada di `src/app/actions/{auth,checkout,products,stock}.ts`.
+- App Router localized ada di `src/app/[locale]` dengan route: `login`, `dashboard`, `cashier`, `history`, `products`, `reports`, dan `settings`.
+- Server actions aktif ada di `src/app/actions/{auth,checkout,products}.ts`.
 - UI foundation aktif ada di `src/components/ui/*` dengan `pos.tsx` dan `index.ts` sebagai komposisi helper.
-- Domain server aktif ada di `src/lib/server/{appwrite,auth,checkout,env,pos-types,products,sales,session,stock}.ts`.
+- Domain server aktif ada di `src/lib/server/{appwrite,auth,checkout,database,env,pos-types,products,sales,session}.ts`.
 - Dukungan i18n aktif ada di `src/i18n/*` dan `messages/{id,en}.json`.
 - Verification/runtime support aktif ada di `scripts/*`, `playwright.config.ts`, dan `e2e/*`.
 - Tidak ada `src/app/api/*` pada snapshot repo saat ini; mutasi server memakai Server Actions.

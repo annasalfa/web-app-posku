@@ -18,23 +18,22 @@ import {
   FieldGroup,
   Input,
   PageTransition,
-    SearchField,
-    SegmentedControl,
-    Select,
+  SearchField,
+  SegmentedControl,
+  Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
-    SelectValue,
-    StatusBadge,
-    SurfaceNotice,
-  } from '@/components/ui';
+  SelectValue,
+  StatusBadge,
+  SurfaceNotice,
+} from '@/components/ui';
 import {formatCurrency} from '@/lib/format';
 
 type ProductItem = {
   id: string;
   name: string;
   price: number;
-  stockQty: number;
   isActive: boolean;
   categoryId: string | null;
   categoryName: string;
@@ -50,7 +49,6 @@ type ProductDraft = {
   id?: string;
   name: string;
   price: number;
-  stockQty: number;
   isActive: boolean;
   categoryId: string | null;
 };
@@ -80,7 +78,6 @@ export function ProductsPage({
   const nameId = useId();
   const categoryId = useId();
   const priceId = useId();
-  const stockId = useId();
 
   const filtered = useMemo(
     () => items.filter((item) => `${item.name} ${item.categoryName} ${item.sku}`.toLowerCase().includes(deferredQuery.toLowerCase())),
@@ -98,7 +95,6 @@ export function ProductsPage({
       id: product.id,
       name: product.name,
       price: product.price,
-      stockQty: product.stockQty,
       isActive: product.isActive,
       categoryId: product.categoryId,
     });
@@ -121,7 +117,6 @@ export function ProductsPage({
           id: draft.id,
           name: draft.name,
           price: draft.price,
-          stockQty: draft.stockQty,
           categoryId: draft.categoryId,
           isActive: draft.isActive,
         });
@@ -188,9 +183,6 @@ export function ProductsPage({
                       <p className="font-mono text-lg font-semibold">
                         {formatCurrency(product.price, locale)}
                       </p>
-                      <p className="mt-1 text-sm text-muted-foreground">
-                        {product.stockQty} {t('stockCount')}
-                      </p>
                     </div>
                   </div>
                 </button>
@@ -227,24 +219,14 @@ export function ProductsPage({
               </Select>
             </FieldGroup>
 
-            <div className="grid gap-4 md:grid-cols-2">
-              <FieldGroup label={t('price')} htmlFor={priceId}>
-                <Input
-                  id={priceId}
-                  inputMode="numeric"
-                  value={String(draft.price)}
-                  onChange={(event) => setDraft({...draft, price: Number(event.target.value || 0)})}
-                />
-              </FieldGroup>
-              <FieldGroup label={t('stock')} htmlFor={stockId}>
-                <Input
-                  id={stockId}
-                  inputMode="numeric"
-                  value={String(draft.stockQty)}
-                  onChange={(event) => setDraft({...draft, stockQty: Number(event.target.value || 0)})}
-                />
-              </FieldGroup>
-            </div>
+            <FieldGroup label={t('price')} htmlFor={priceId}>
+              <Input
+                id={priceId}
+                inputMode="numeric"
+                value={String(draft.price)}
+                onChange={(event) => setDraft({...draft, price: Number(event.target.value || 0)})}
+              />
+            </FieldGroup>
 
             <div className="space-y-2">
               <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
@@ -254,6 +236,7 @@ export function ProductsPage({
                 value={draft.isActive ? 'active' : 'inactive'}
                 onChange={(value) => setDraft({...draft, isActive: value === 'active'})}
                 ariaLabel={common('status')}
+                size="sm"
                 options={[
                   {label: common('active'), value: 'active'},
                   {label: common('inactive'), value: 'inactive'},
@@ -282,7 +265,6 @@ function createEmptyDraft(categories: CategoryItem[]): ProductDraft {
   return {
     name: '',
     price: 0,
-    stockQty: 0,
     isActive: true,
     categoryId: categories[0]?.id ?? null,
   };
@@ -298,10 +280,6 @@ function validateProductDraft(
 
   if (!Number.isFinite(draft.price) || draft.price < 0) {
     return t('priceInvalid');
-  }
-
-  if (!Number.isInteger(draft.stockQty) || draft.stockQty < 0) {
-    return t('stockInvalid');
   }
 
   return '';
@@ -321,10 +299,6 @@ function resolveProductSaveMessage(
 
   if (error.message === 'PRODUCT_PRICE_INVALID') {
     return t('priceInvalid');
-  }
-
-  if (error.message === 'PRODUCT_STOCK_INVALID') {
-    return t('stockInvalid');
   }
 
   return t('saveFailed');

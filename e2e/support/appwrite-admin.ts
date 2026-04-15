@@ -7,17 +7,15 @@ type CategoryDocument = Models.Document & {
 type ProductDocument = Models.Document & {
   name: string;
   price: number;
-  stockQty: number;
+  stockQty?: number;
   categoryId?: string | null;
   isActive: boolean;
 };
 
+const LEGACY_PRODUCT_STOCK_QTY = 0;
+
 type TransactionItemDocument = Models.Document & {
   transactionId: string;
-  productId: string;
-};
-
-type StockLogDocument = Models.Document & {
   productId: string;
 };
 
@@ -47,7 +45,6 @@ function getIds() {
     productsCollectionId: requireEnv('APPWRITE_PRODUCTS_COLLECTION_ID'),
     transactionsCollectionId: requireEnv('APPWRITE_TRANSACTIONS_COLLECTION_ID'),
     transactionItemsCollectionId: requireEnv('APPWRITE_TRANSACTION_ITEMS_COLLECTION_ID'),
-    stockLogsCollectionId: requireEnv('APPWRITE_STOCK_LOGS_COLLECTION_ID'),
   };
 }
 
@@ -78,7 +75,6 @@ export async function findProductByName(name: string) {
 export async function createProduct(input: {
   name: string;
   price: number;
-  stockQty: number;
   categoryId?: string | null;
   isActive?: boolean;
 }) {
@@ -92,7 +88,7 @@ export async function createProduct(input: {
     data: {
       name: input.name,
       price: input.price,
-      stockQty: input.stockQty,
+      stockQty: LEGACY_PRODUCT_STOCK_QTY,
       categoryId: input.categoryId ?? null,
       isActive: input.isActive ?? true,
     },
@@ -106,24 +102,7 @@ export async function cleanupProductArtifacts(productId: string) {
     productsCollectionId,
     transactionsCollectionId,
     transactionItemsCollectionId,
-    stockLogsCollectionId,
   } = getIds();
-
-  const stockLogs = await databases.listDocuments<StockLogDocument>({
-    databaseId,
-    collectionId: stockLogsCollectionId,
-    queries: [Query.equal('productId', productId), Query.limit(200)],
-  });
-
-  for (const log of stockLogs.documents) {
-    await safeRun(() =>
-      databases.deleteDocument({
-        databaseId,
-        collectionId: stockLogsCollectionId,
-        documentId: log.$id,
-      }),
-    );
-  }
 
   const transactionItems = await databases.listDocuments<TransactionItemDocument>({
     databaseId,

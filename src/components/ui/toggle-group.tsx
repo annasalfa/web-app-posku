@@ -7,13 +7,13 @@ import {cva, type VariantProps} from 'class-variance-authority';
 import {cn} from '@/lib/utils/cn';
 
 const toggleGroupVariants = cva(
-  'inline-flex items-center justify-center rounded-[var(--radius-standard)] text-sm font-medium transition-colors hover:bg-muted/80 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/60 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=on]:bg-primary data-[state=on]:text-primary-foreground data-[state=on]:shadow-sm',
+  'inline-flex min-w-0 items-center justify-center rounded-[var(--radius-standard)] text-center font-medium leading-tight transition-colors hover:bg-muted/80 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/60 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=on]:bg-primary data-[state=on]:text-primary-foreground data-[state=on]:shadow-sm',
   {
     variants: {
       size: {
-        default: 'h-11 px-4',
-        sm: 'h-9 px-3',
-        lg: 'h-12 px-5',
+        default: 'min-h-10 px-3 py-2 text-[13px] sm:min-h-11 sm:px-4 sm:text-sm',
+        sm: 'min-h-9 px-3 py-2 text-xs sm:text-[13px]',
+        lg: 'min-h-12 px-5 py-2.5 text-sm sm:text-[15px]',
       },
     },
     defaultVariants: {
@@ -36,7 +36,7 @@ const ToggleGroup = React.forwardRef<
   <ToggleGroupPrimitive.Root
     ref={ref}
     className={cn(
-      'inline-flex w-full flex-wrap items-center gap-2 rounded-[var(--radius-large)] border border-border bg-muted/50 p-1.5',
+      'inline-flex w-full flex-wrap items-stretch gap-1.5 rounded-[var(--radius-large)] border border-border bg-muted/50 p-1',
       className,
     )}
     {...props}
@@ -58,7 +58,7 @@ const ToggleGroupItem = React.forwardRef<
   return (
     <ToggleGroupPrimitive.Item
       ref={ref}
-      className={cn(toggleGroupVariants({size: context.size ?? size}), 'flex-1', className)}
+      className={cn(toggleGroupVariants({size: context.size ?? size}), 'min-w-[5.5rem] flex-1 whitespace-normal break-words', className)}
       {...props}
     >
       {children}

@@ -8,7 +8,6 @@ Repo ini berisi aplikasi `Next.js 15` yang terhubung ke `Appwrite` untuk:
 - history transaksi
 - laporan dan export CSV/Excel
 - manajemen produk
-- manajemen stok dengan audit trail
 - dashboard penjualan
 
 ## Status
@@ -27,9 +26,8 @@ Quality gate lokal terakhir:
 - History transaksi dengan pencarian, filter pembayaran, dan detail item
 - Laporan harian, mingguan, bulanan, dan kustom
 - Export CSV dan Excel
-- CRUD produk
-- Penyesuaian stok manual dan log stok
-- Dashboard revenue, produk terlaris, dan stok kritis
+- CRUD produk dengan status aktif/nonaktif
+- Dashboard revenue, pesanan, rata-rata tiket, dan produk terlaris
 - Bilingual UI: Bahasa Indonesia dan English
 - Theme switch: light, dark, system
 - Layout touch-friendly untuk tablet
@@ -68,7 +66,6 @@ APPWRITE_PRODUCTS_COLLECTION_ID=
 APPWRITE_CATEGORIES_COLLECTION_ID=
 APPWRITE_TRANSACTIONS_COLLECTION_ID=
 APPWRITE_TRANSACTION_ITEMS_COLLECTION_ID=
-APPWRITE_STOCK_LOGS_COLLECTION_ID=
 ```
 
 ### 3. Provision dan seed database
@@ -151,11 +148,10 @@ Coverage E2E saat ini mencakup:
 - dashboard
 - checkout kasir
 - CRUD produk
-- penyesuaian stok
 - history transaksi
 - laporan dan export CSV
 - theme dan locale switch
-- edge case UI utama
+- edge case UI utama termasuk produk nonaktif, nominal tunai kurang, drawer shell, dan overflow detail histori
 
 ## Struktur Direktori
 

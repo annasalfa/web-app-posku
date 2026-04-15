@@ -10,7 +10,7 @@ export async function checkoutAction(input: CheckoutInput) {
   await requireCurrentUser();
   const result = await submitCheckout(input);
 
-  revalidateBackoffice(['/', '/cashier', '/history', '/reports', '/stock', '/products']);
+  revalidateBackoffice(['/', '/cashier', '/history', '/reports', '/products']);
 
   return result;
 }

@@ -18,7 +18,6 @@ test.describe.serial("backoffice interactions", () => {
   const productName = `000 E2E Product ${Date.now()}`;
   const updatedProductName = `${productName} Updated`;
   const finalProductName = `${updatedProductName} Final`;
-  const stockReason = `e2e-restock-${Date.now()}`;
   let createdProductId: string | null = null;
 
   test.afterAll(async () => {
@@ -48,7 +47,6 @@ test.describe.serial("backoffice interactions", () => {
     await expect(dialog).toBeVisible();
     await page.getByLabel("Nama").fill("");
     await page.getByLabel("Harga").fill("1000");
-    await page.getByLabel("Stok awal").fill("1");
     await page.getByRole("button", { name: "Simpan" }).click();
 
     await expect(dialog).toBeVisible();
@@ -75,7 +73,6 @@ test.describe.serial("backoffice interactions", () => {
     await page.getByRole("combobox", { name: "Kategori" }).click();
     await page.getByRole("option", { name: firstCategory!.name }).click();
     await page.getByLabel("Harga").fill("12345");
-    await page.getByLabel("Stok awal").fill("6");
     await page.getByRole("button", { name: "Simpan" }).click();
 
     await expect(page.getByRole("dialog")).not.toBeVisible();
@@ -88,7 +85,6 @@ test.describe.serial("backoffice interactions", () => {
     await expect(page.getByRole("dialog", { name: productName })).toBeVisible();
     await page.getByLabel("Nama").fill(updatedProductName);
     await page.getByLabel("Harga").fill("13000");
-    await page.getByLabel("Stok awal").fill("6");
     await page.getByRole("button", { name: "Simpan" }).click();
 
     await expect(page.getByRole("dialog")).not.toBeVisible();
@@ -100,33 +96,6 @@ test.describe.serial("backoffice interactions", () => {
     const product = await findProductByName(updatedProductName);
     expect(product).not.toBeNull();
     createdProductId = product!.$id;
-  });
-
-  test("adjusts stock for the temporary product", async ({ page }) => {
-    await gotoReady(page, "/id/stock", () => page.getByLabel("Delta"));
-
-    const productButton = page.getByRole("button", {
-      name: new RegExp(updatedProductName),
-    });
-
-    await expect(async () => {
-      await page.reload();
-      await expect(productButton).toBeVisible();
-    }).toPass({ timeout: 20000 });
-
-    await productButton.click();
-    await expect(
-      page.getByRole("heading", { name: updatedProductName }),
-    ).toBeVisible();
-    await page.getByLabel("Delta").fill("2");
-    await page.getByLabel("Alasan").fill(stockReason);
-    await page.getByRole("button", { name: "Sesuaikan stok" }).click();
-
-    await expect(productButton).toContainText("8");
-    await expect(async () => {
-      await page.reload();
-      await expect(page.getByText(stockReason)).toBeVisible();
-    }).toPass({ timeout: 15000 });
   });
 
   test("uses cashier interactions and completes checkout", async ({ page }) => {
@@ -150,7 +119,7 @@ test.describe.serial("backoffice interactions", () => {
     ).toBeDisabled();
 
     await page
-      .getByRole("group", { name: "Metode bayar" })
+      .getByRole("radiogroup", { name: "Metode bayar" })
       .getByText("Transfer bank")
       .click();
     await expect(
@@ -158,7 +127,7 @@ test.describe.serial("backoffice interactions", () => {
     ).toBeEnabled();
 
     await page
-      .getByRole("group", { name: "Metode bayar" })
+      .getByRole("radiogroup", { name: "Metode bayar" })
       .getByText("Tunai")
       .click();
     await page
@@ -178,7 +147,7 @@ test.describe.serial("backoffice interactions", () => {
 
     await page.getByRole("button", { name: "Selesaikan transaksi" }).click();
     await expect(
-      page.getByText("Transaksi siap dikirim ke dapur dan update stok."),
+      page.getByText("Transaksi berhasil disimpan."),
     ).toBeVisible({ timeout: 15000 });
     await expect(
       page.getByRole("heading", { name: "Belum ada item" }),

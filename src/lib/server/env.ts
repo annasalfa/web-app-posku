@@ -6,8 +6,7 @@ type DatabaseEnvName =
   | 'APPWRITE_PRODUCTS_COLLECTION_ID'
   | 'APPWRITE_CATEGORIES_COLLECTION_ID'
   | 'APPWRITE_TRANSACTIONS_COLLECTION_ID'
-  | 'APPWRITE_TRANSACTION_ITEMS_COLLECTION_ID'
-  | 'APPWRITE_STOCK_LOGS_COLLECTION_ID';
+  | 'APPWRITE_TRANSACTION_ITEMS_COLLECTION_ID';
 
 function readEnv(name: ServerEnvName | DatabaseEnvName) {
   const value = process.env[name];
@@ -46,8 +45,7 @@ export function hasDatabaseAppwriteEnv() {
       readEnv('APPWRITE_PRODUCTS_COLLECTION_ID') &&
       readEnv('APPWRITE_CATEGORIES_COLLECTION_ID') &&
       readEnv('APPWRITE_TRANSACTIONS_COLLECTION_ID') &&
-      readEnv('APPWRITE_TRANSACTION_ITEMS_COLLECTION_ID') &&
-      readEnv('APPWRITE_STOCK_LOGS_COLLECTION_ID'),
+      readEnv('APPWRITE_TRANSACTION_ITEMS_COLLECTION_ID'),
   );
 }
 
@@ -57,15 +55,13 @@ export function getDatabaseEnv() {
   const categoriesCollectionId = readEnv('APPWRITE_CATEGORIES_COLLECTION_ID');
   const transactionsCollectionId = readEnv('APPWRITE_TRANSACTIONS_COLLECTION_ID');
   const transactionItemsCollectionId = readEnv('APPWRITE_TRANSACTION_ITEMS_COLLECTION_ID');
-  const stockLogsCollectionId = readEnv('APPWRITE_STOCK_LOGS_COLLECTION_ID');
 
   if (
     !databaseId ||
     !productsCollectionId ||
     !categoriesCollectionId ||
     !transactionsCollectionId ||
-    !transactionItemsCollectionId ||
-    !stockLogsCollectionId
+    !transactionItemsCollectionId
   ) {
     throw new Error('APPWRITE_DATABASE_ENV_MISSING');
   }
@@ -76,6 +72,5 @@ export function getDatabaseEnv() {
     categoriesCollectionId,
     transactionsCollectionId,
     transactionItemsCollectionId,
-    stockLogsCollectionId,
   };
 }

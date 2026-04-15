@@ -16,6 +16,7 @@ opencode.json
 playwright-report/
 test-results/
 playwright/.auth/
+.playwright-mcp/
 .testsprite/
 testsprite_tests/
 

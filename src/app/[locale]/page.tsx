@@ -23,9 +23,7 @@ export default async function HomePage({
       revenueToday: 0,
       ordersToday: 0,
       averageTicket: 0,
-      lowStockCount: 0,
       topProducts: [],
-      lowStockProducts: [],
     },
     read: () => getDashboardMetrics(),
   });

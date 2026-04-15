@@ -8,7 +8,6 @@ import {listProductsByIds} from '@/lib/server/products';
 import {
   type CheckoutInput,
   type PaymentMethod,
-  type StockLogDocument,
   type TransactionDocument,
   type TransactionItemDocument,
   type ProductRecord,
@@ -25,7 +24,7 @@ export async function submitCheckout(input: CheckoutInput) {
     throw new Error('APPWRITE_DATABASE_ENV_MISSING');
   }
 
-  const {databaseId, transactionsCollectionId, transactionItemsCollectionId, productsCollectionId, stockLogsCollectionId} =
+  const {databaseId, transactionsCollectionId, transactionItemsCollectionId} =
     getDatabaseEnv();
   const lines = await buildCheckoutLines(input.items);
   const totalAmount = lines.reduce((sum, line) => sum + line.subtotal, 0);
@@ -64,37 +63,6 @@ export async function submitCheckout(input: CheckoutInput) {
       });
     }
 
-    for (const line of lines) {
-      const nextStockQty = line.product.stockQty - line.quantity;
-
-      await databases.updateDocument({
-        databaseId,
-        collectionId: productsCollectionId,
-        documentId: line.product.id,
-        data: {
-          stockQty: nextStockQty,
-        },
-        transactionId,
-      });
-    }
-
-    for (const line of lines) {
-      await databases.createDocument<StockLogDocument>({
-        databaseId,
-        collectionId: stockLogsCollectionId,
-        documentId: ID.unique(),
-        data: {
-          productId: line.product.id,
-          changeQty: -line.quantity,
-          stockBefore: line.product.stockQty,
-          stockAfter: line.product.stockQty - line.quantity,
-          reason: 'sale',
-          transactionId: transaction.$id,
-        },
-        transactionId,
-      });
-    }
-
     return {
       transactionId: transaction.$id,
       totalAmount,
@@ -126,10 +94,6 @@ async function buildCheckoutLines(items: CheckoutInput['items']) {
 
     if (!product.isActive) {
       throw new Error('CHECKOUT_PRODUCT_INACTIVE');
-    }
-
-    if (product.stockQty < item.quantity) {
-      throw new Error('CHECKOUT_STOCK_INSUFFICIENT');
     }
 
     lines.push({

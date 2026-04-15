@@ -20,6 +20,15 @@ const inter = Inter({
 export const metadata: Metadata = {
   title: 'POSKU',
   description: 'Tablet-first POS frontend for a single F&B outlet.',
+  icons: {
+    icon: [
+      {url: '/favicon.ico', sizes: 'any'},
+      {url: '/favicon-16x16.png', sizes: '16x16', type: 'image/png'},
+      {url: '/favicon-32x32.png', sizes: '32x32', type: 'image/png'},
+    ],
+    shortcut: '/favicon.ico',
+    apple: [{url: '/icon-96x96.png', sizes: '96x96', type: 'image/png'}],
+  },
 };
 
 export const dynamic = 'force-dynamic';

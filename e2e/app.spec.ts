@@ -16,7 +16,7 @@ test('navigates to cashier and renders checkout controls', async ({page}) => {
   await expect(page).toHaveURL(/\/id\/cashier$/);
   await expectShellTitle(page, 'Kasir');
   await expect(page.getByRole('group', {name: 'Filter kategori'})).toBeVisible();
-  await expect(page.getByRole('group', {name: 'Metode bayar'})).toBeVisible();
+  await expect(page.getByRole('radiogroup', {name: 'Metode bayar'})).toBeVisible();
   await expect(page.getByRole('button', {name: 'Selesaikan transaksi'})).toBeVisible();
 });
 

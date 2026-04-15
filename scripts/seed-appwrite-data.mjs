@@ -30,14 +30,14 @@ const categories = [
 ];
 
 const products = [
-  {id: 'prd-1', name: 'Espresso Tonic', categoryId: 'cat-coffee', price: 32000, stockQty: 18, isActive: true},
-  {id: 'prd-2', name: 'Cloud Latte', categoryId: 'cat-coffee', price: 30000, stockQty: 11, isActive: true},
-  {id: 'prd-3', name: 'Gyokuro Lemon', categoryId: 'cat-tea', price: 28000, stockQty: 14, isActive: true},
-  {id: 'prd-4', name: 'Burnt Butter Kouign', categoryId: 'cat-pastry', price: 26000, stockQty: 7, isActive: true},
-  {id: 'prd-5', name: 'Miso Chicken Bowl', categoryId: 'cat-rice-bowl', price: 46000, stockQty: 9, isActive: true},
-  {id: 'prd-6', name: 'Yuzu Sparkler', categoryId: 'cat-cold-bar', price: 27000, stockQty: 15, isActive: true},
-  {id: 'prd-7', name: 'Black Sesame Bun', categoryId: 'cat-pastry', price: 21000, stockQty: 4, isActive: true},
-  {id: 'prd-8', name: 'House Cold Brew', categoryId: 'cat-coffee', price: 29000, stockQty: 2, isActive: true},
+  {id: 'prd-1', name: 'Espresso Tonic', categoryId: 'cat-coffee', price: 32000, isActive: true},
+  {id: 'prd-2', name: 'Cloud Latte', categoryId: 'cat-coffee', price: 30000, isActive: true},
+  {id: 'prd-3', name: 'Gyokuro Lemon', categoryId: 'cat-tea', price: 28000, isActive: true},
+  {id: 'prd-4', name: 'Burnt Butter Kouign', categoryId: 'cat-pastry', price: 26000, isActive: true},
+  {id: 'prd-5', name: 'Miso Chicken Bowl', categoryId: 'cat-rice-bowl', price: 46000, isActive: true},
+  {id: 'prd-6', name: 'Yuzu Sparkler', categoryId: 'cat-cold-bar', price: 27000, isActive: true},
+  {id: 'prd-7', name: 'Black Sesame Bun', categoryId: 'cat-pastry', price: 21000, isActive: true},
+  {id: 'prd-8', name: 'House Cold Brew', categoryId: 'cat-coffee', price: 29000, isActive: true},
 ];
 
 await seed();

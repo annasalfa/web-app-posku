@@ -4,7 +4,6 @@ import {Query} from 'node-appwrite';
 
 import {listAllDocuments} from '@/lib/server/database';
 import {getDatabaseEnv, hasDatabaseAppwriteEnv} from '@/lib/server/env';
-import {listProducts} from '@/lib/server/products';
 import {
   type DashboardMetricsRecord,
   mapTransactionDocument,
@@ -15,23 +14,18 @@ import {
 } from '@/lib/server/pos-types';
 
 const TRANSACTION_ITEM_CHUNK_SIZE = 20;
-const LOW_STOCK_THRESHOLD = 5;
-
 export async function listTransactions(limit?: number): Promise<TransactionRecord[]> {
   if (!hasDatabaseAppwriteEnv()) {
     throw new Error('APPWRITE_DATABASE_ENV_MISSING');
   }
 
   const {databaseId, transactionsCollectionId} = getDatabaseEnv();
-  const [products, transactionDocuments] = await Promise.all([
-    listProducts(),
-    listAllDocuments<TransactionDocument>({
-      databaseId,
-      collectionId: transactionsCollectionId,
-      queries: [Query.orderDesc('$createdAt')],
-      maxDocuments: limit,
-    }),
-  ]);
+  const transactionDocuments = await listAllDocuments<TransactionDocument>({
+    databaseId,
+    collectionId: transactionsCollectionId,
+    queries: [Query.orderDesc('$createdAt')],
+    maxDocuments: limit,
+  });
 
   if (transactionDocuments.length === 0) {
     return [];
@@ -39,7 +33,7 @@ export async function listTransactions(limit?: number): Promise<TransactionRecor
 
   const itemsByTransactionId = await listTransactionItemsByTransactionIds(
     transactionDocuments.map((transaction) => transaction.$id),
-    new Map(products.map((product) => [product.id, product.name])),
+    new Map<string, string>(),
   );
 
   return transactionDocuments.map((document) =>
@@ -48,7 +42,7 @@ export async function listTransactions(limit?: number): Promise<TransactionRecor
 }
 
 export async function getDashboardMetrics(): Promise<DashboardMetricsRecord> {
-  const [products, transactions] = await Promise.all([listProducts(), listTransactions()]);
+  const transactions = await listTransactions();
   const todayKey = getDateKey(new Date());
   const todayTransactions = transactions.filter((transaction) => getDateKey(new Date(transaction.createdAt)) === todayKey);
   const revenueToday = todayTransactions.reduce((sum, transaction) => sum + transaction.totalAmount, 0);
@@ -72,26 +66,11 @@ export async function getDashboardMetrics(): Promise<DashboardMetricsRecord> {
     .sort((left, right) => right.sold - left.sold || left.name.localeCompare(right.name))
     .slice(0, 3);
 
-  const allLowStockProducts = products
-    .filter((product) => product.stockQty <= LOW_STOCK_THRESHOLD)
-    .sort((left, right) => left.stockQty - right.stockQty || left.name.localeCompare(right.name));
-
-  const lowStockProducts = allLowStockProducts
-    .slice(0, 5)
-    .map((product) => ({
-      id: product.id,
-      name: product.name,
-      category: product.categoryName,
-      stockQty: product.stockQty,
-    }));
-
   return {
     revenueToday,
     ordersToday,
     averageTicket,
-    lowStockCount: allLowStockProducts.length,
     topProducts,
-    lowStockProducts,
   };
 }
 
