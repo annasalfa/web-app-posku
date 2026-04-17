@@ -1,6 +1,6 @@
 import fs from 'node:fs';
 
-import {expect, test as setup} from '@playwright/test';
+import {test as setup} from '@playwright/test';
 
 import {expectShellTitle} from './support/shell';
 

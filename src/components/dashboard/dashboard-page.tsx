@@ -7,7 +7,6 @@ import {
   EmptyState,
   MetricCard,
   PageTransition,
-  StatusBadge,
   SurfaceNotice,
 } from '@/components/ui';
 import {formatCompactNumber, formatCurrency} from '@/lib/format';

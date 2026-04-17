@@ -52,7 +52,7 @@ export function CashierPage({
   const locale = useLocale() as 'id' | 'en';
   const isOnline = useOnlineStatus();
   const reduceMotion = useReducedMotion();
-  const [menuItems, setMenuItems] = useState(initialProducts);
+  const menuItems = initialProducts;
   const [query, setQuery] = useState('');
   const [category, setCategory] = useState<string>('all');
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('cash');

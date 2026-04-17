@@ -1,4 +1,4 @@
-import "server-only";
+import 'server-only';
 
 import {ID, Query} from 'node-appwrite';
 
@@ -39,7 +39,6 @@ export async function listProducts(options?: {
   }
 
   const {databaseId, productsCollectionId} = getDatabaseEnv();
-  const {databases} = createAdminClient();
   const queries = [Query.orderAsc('name')];
 
   if (options?.activeOnly) {

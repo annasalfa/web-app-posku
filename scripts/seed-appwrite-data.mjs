@@ -1,7 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 
-import {Client, Databases, ID} from 'node-appwrite';
+import {Client, Databases} from 'node-appwrite';
 
 loadEnvFile(path.resolve(process.cwd(), '.env'));
 
