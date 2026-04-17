@@ -8,6 +8,7 @@ coverage/
 .env.*
 !.env.example
 opencode.json
+1 Kasir Atur DIskon Atur.txt
 
 .codex/
 .vercel/
