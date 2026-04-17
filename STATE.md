@@ -279,6 +279,9 @@
   - export buttons default disabled-state expectation
 
 ## Latest Session Update
+- On `2026-04-17`, `scripts/run-tests.mjs` was fixed for Windows + Node v24 by avoiding direct `npm.cmd` spawning, preferring `npm_execpath` through `process.execPath`, and falling back to shell execution only when needed.
+- On `2026-04-17`, `scripts/run-tests.mjs` now auto-selects the next available smoke-test port from `3200` when `PLAYWRIGHT_PORT` is not explicitly set, preventing local `EADDRINUSE` failures from stale or parallel dev servers.
+- On `2026-04-17`, `next.config.ts` moved `typedRoutes: true` from `experimental` to the root Next config so Next.js 15 no longer emits the typed routes migration warning during build.
 - Added `src/lib/server/database.ts` as shared infrastructure for:
   - paginated Appwrite reads without fixed silent caps
   - native Appwrite database transactions for multi-document writes
@@ -313,6 +316,8 @@
   - `scripts/run-tests.mjs` now boots a local dev server on port `3200` and disables Playwright `webServer` for the public smoke project to avoid the nested `next start` chunk-resolution failure seen under `npm test`
 
 ## Verification This Session
+- On `2026-04-17`, verification after the test runner and typed routes config fix passed: `npm test`, `npm run build`, `npm run lint`, and `npx tsc --noEmit`.
+- `npm test` now succeeds on Windows + Node `v24.14.1`; when port `3200` is already in use, the smoke helper selects the next available port and forwards it to Playwright through `PLAYWRIGHT_PORT`.
 - On `2026-04-15`, drawer description and favicon runtime follow-ups were verified with lint, typecheck, production build, public smoke, targeted Playwright specs, and the full Playwright suite.
 - `npm run lint` succeeds
 - `npm run build` succeeds
