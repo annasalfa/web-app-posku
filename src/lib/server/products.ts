@@ -13,6 +13,8 @@ import {
   type SaveProductInput,
 } from '@/lib/server/pos-types';
 
+const LEGACY_PRODUCT_STOCK_QTY = 0;
+
 export async function listCategories() {
   if (!hasDatabaseAppwriteEnv()) {
     throw new Error('APPWRITE_DATABASE_ENV_MISSING');
@@ -122,7 +124,7 @@ export async function saveProduct(
     throw new Error('APPWRITE_DATABASE_ENV_MISSING');
   }
 
-  const payload = validateProductInput(input);
+  const payload = buildProductWritePayload(input);
   const {databaseId, productsCollectionId} = getDatabaseEnv();
   const {databases} = createAdminClient();
 
@@ -148,7 +150,7 @@ export async function saveProduct(
   return mapProductDocument(document, categoryMap);
 }
 
-function validateProductInput(input: SaveProductInput) {
+function buildProductWritePayload(input: SaveProductInput) {
   const name = input.name.trim();
 
   if (!name) {
@@ -159,15 +161,12 @@ function validateProductInput(input: SaveProductInput) {
     throw new Error('PRODUCT_PRICE_INVALID');
   }
 
-  if (!Number.isInteger(input.stockQty) || input.stockQty < 0) {
-    throw new Error('PRODUCT_STOCK_INVALID');
-  }
-
   return {
     name,
     price: input.price,
-    stockQty: input.stockQty,
     categoryId: input.categoryId ?? null,
     isActive: input.isActive ?? true,
+    // Keep legacy Appwrite schemas writable while stock stays removed from the app domain.
+    stockQty: LEGACY_PRODUCT_STOCK_QTY,
   };
 }

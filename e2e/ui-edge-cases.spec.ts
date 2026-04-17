@@ -5,9 +5,9 @@ import {expectDesktopRailHasNoBranding, expectMobileDrawerHasNoBranding, expectS
 
 test.describe.serial('ui edge cases', () => {
   const suffix = Date.now();
-  const outOfStockName = `E2E Out ${suffix}`;
+  const inactiveName = `E2E Inactive ${suffix}`;
   const checkoutName = `E2E QRIS ${suffix}`;
-  let outOfStockProductId: string | null = null;
+  let inactiveProductId: string | null = null;
   let checkoutProductId: string | null = null;
 
   test.beforeAll(async () => {
@@ -17,28 +17,27 @@ test.describe.serial('ui edge cases', () => {
       throw new Error('At least one category is required for UI edge-case tests.');
     }
 
-    const [outOfStockProduct, checkoutProduct] = await Promise.all([
+    const [inactiveProduct, checkoutProduct] = await Promise.all([
       createProduct({
-        name: outOfStockName,
+        name: inactiveName,
         price: 5000,
-        stockQty: 0,
         categoryId: category.$id,
+        isActive: false,
       }),
       createProduct({
         name: checkoutName,
         price: 7000,
-        stockQty: 2,
         categoryId: category.$id,
       }),
     ]);
 
-    outOfStockProductId = outOfStockProduct.$id;
+    inactiveProductId = inactiveProduct.$id;
     checkoutProductId = checkoutProduct.$id;
   });
 
   test.afterAll(async () => {
-    if (outOfStockProductId) {
-      await cleanupProductArtifacts(outOfStockProductId);
+    if (inactiveProductId) {
+      await cleanupProductArtifacts(inactiveProductId);
     }
 
     if (checkoutProductId) {
@@ -60,15 +59,12 @@ test.describe.serial('ui edge cases', () => {
     await expect(dialog).toBeHidden();
   });
 
-  test('blocks out-of-stock products and cash checkout until payment is sufficient', async ({page}) => {
+  test('hides inactive products and blocks cash checkout until payment is sufficient', async ({page}) => {
     await page.goto('/id/cashier');
 
-    await page.getByLabel('Cari').fill(outOfStockName);
+    await page.getByLabel('Cari').fill(inactiveName);
 
-    const outOfStockButton = page.getByRole('button', {name: new RegExp(outOfStockName)});
-
-    await expect(outOfStockButton).toBeDisabled();
-    await expect(outOfStockButton.getByText('Stok habis')).toBeVisible();
+    await expect(page.getByText('Item tidak ditemukan')).toBeVisible();
     await expect(page.getByRole('heading', {name: 'Belum ada item'})).toBeVisible();
 
     await page.getByLabel('Cari').fill(checkoutName);
@@ -88,13 +84,13 @@ test.describe.serial('ui edge cases', () => {
 
     await page.getByLabel('Cari').fill(checkoutName);
     await page.getByRole('button', {name: new RegExp(checkoutName)}).click();
-    await page.getByRole('group', {name: 'Metode bayar'}).getByText('QRIS').click();
+    await page.getByRole('radiogroup', {name: 'Metode bayar'}).getByText('QRIS').click();
 
     await expect(page.getByLabel('Nominal diterima')).toHaveCount(0);
     await expect(page.getByRole('button', {name: 'Selesaikan transaksi'})).toBeEnabled();
 
     await page.getByRole('button', {name: 'Selesaikan transaksi'}).click();
-    await expect(page.getByText('Transaksi siap dikirim ke dapur dan update stok.')).toBeVisible({timeout: 15000});
+    await expect(page.getByText('Transaksi berhasil disimpan.')).toBeVisible({timeout: 15000});
     await expect(page.getByRole('heading', {name: 'Belum ada item'})).toBeVisible({timeout: 15000});
   });
 
@@ -124,6 +120,15 @@ test.describe.serial('ui edge cases', () => {
     await expect(page.getByRole('link', {name: 'Kasir'})).toHaveCount(0);
 
     await page.setViewportSize({width: 1024, height: 768});
+    await page.goto('/id');
+
+    await expect(openNavigationButton).toBeVisible();
+    await openNavigationButton.click();
+    await expectMobileDrawerHasNoBranding(page);
+    await expect(page.getByRole('link', {name: 'Kasir'})).toBeVisible();
+    await page.keyboard.press('Escape');
+
+    await page.setViewportSize({width: 1440, height: 900});
     await page.goto('/id');
 
     await expect(openNavigationButton).toBeHidden();

@@ -20,7 +20,6 @@ const config = {
     categories: requiredEnv('APPWRITE_CATEGORIES_COLLECTION_ID'),
     transactions: requiredEnv('APPWRITE_TRANSACTIONS_COLLECTION_ID'),
     transactionItems: requiredEnv('APPWRITE_TRANSACTION_ITEMS_COLLECTION_ID'),
-    stockLogs: requiredEnv('APPWRITE_STOCK_LOGS_COLLECTION_ID'),
   },
 };
 
@@ -48,7 +47,6 @@ const COLLECTIONS = [
     attributes: [
       {type: 'string', key: 'name', size: 255, required: true},
       {type: 'float', key: 'price', required: true, min: 0},
-      {type: 'integer', key: 'stockQty', required: true, min: 0},
       {type: 'string', key: 'categoryId', size: 36, required: false},
       {type: 'boolean', key: 'isActive', required: true},
     ],
@@ -92,22 +90,6 @@ const COLLECTIONS = [
         attributes: ['transactionId', 'productId'],
         orders: [OrderBy.Asc, OrderBy.Asc],
       },
-    ],
-  },
-  {
-    id: config.collections.stockLogs,
-    name: 'Stock Logs',
-    attributes: [
-      {type: 'string', key: 'productId', size: 36, required: true},
-      {type: 'integer', key: 'changeQty', required: true},
-      {type: 'integer', key: 'stockBefore', required: true, min: 0},
-      {type: 'integer', key: 'stockAfter', required: true, min: 0},
-      {type: 'string', key: 'reason', size: 64, required: true},
-      {type: 'string', key: 'transactionId', size: 36, required: false},
-    ],
-    indexes: [
-      {key: 'stock_logs_product_id_key', type: DatabasesIndexType.Key, attributes: ['productId'], orders: [OrderBy.Asc]},
-      {key: 'stock_logs_transaction_id_key', type: DatabasesIndexType.Key, attributes: ['transactionId'], orders: [OrderBy.Asc]},
     ],
   },
 ];

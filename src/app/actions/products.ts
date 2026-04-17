@@ -20,7 +20,7 @@ export async function saveProductAction(input: SaveProductInput) {
   await requireCurrentUser();
   const product = await saveProduct(input);
 
-  revalidateBackoffice(['/', '/products', '/stock', '/cashier']);
+  revalidateBackoffice(['/', '/products', '/cashier']);
 
   return product;
 }

@@ -7,7 +7,8 @@ import type {ReactNode} from 'react';
 import {useMemo, useState} from 'react';
 
 import {Button} from '@/components/ui/button';
-import {Sheet, SheetContent} from '@/components/ui/sheet';
+import {Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle} from '@/components/ui/sheet';
+import {VisuallyHidden} from '@/components/ui/visually-hidden';
 import {StatusBadge} from '@/components/ui/pos';
 import {Link} from '@/i18n/navigation';
 import {NAV_ITEMS} from '@/lib/constants/navigation';
@@ -44,18 +45,18 @@ export function AppFrame({
         {shell('skipToContent')}
       </a>
 
-      <div className="mx-auto flex min-h-dvh w-full max-w-[1600px] gap-4 px-3 py-3 md:px-4 md:py-4 xl:gap-5 xl:px-5">
-        <aside className="hidden md:flex md:w-[14rem] xl:w-[18rem]">
+      <div className="mx-auto flex min-h-dvh w-full max-w-[1600px] gap-3 px-3 py-3 md:px-4 md:py-4 lg:gap-4 xl:gap-5 xl:px-5">
+        <aside className="hidden xl:flex xl:w-[15rem] 2xl:w-[18rem]">
           <DesktopRail locale={locale} pathname={pathname ?? ''} />
         </aside>
 
         <div className="min-w-0 flex-1">
-          <header className="sticky top-0 z-30 mb-4 rounded-[calc(var(--radius-card)+4px)] border border-border/80 bg-card/92 px-4 py-3 shadow-sm backdrop-blur md:px-5">
+          <header className="sticky top-0 z-30 mb-4 rounded-[calc(var(--radius-card)+4px)] border border-border/80 bg-card/92 px-3.5 py-2.5 shadow-sm backdrop-blur md:px-4 md:py-3 lg:px-5">
             <div className="flex items-center gap-3">
               <Button
                 variant="secondary"
                 size="icon"
-                className="md:hidden"
+                className="xl:hidden"
                 aria-label={shell('openNavigation')}
                 onClick={() => setNavOpen(true)}
               >
@@ -63,13 +64,13 @@ export function AppFrame({
               </Button>
 
               <div className="min-w-0 flex-1">
-                <p className="truncate text-xl font-bold tracking-[-0.03em] md:text-2xl">
+                <p className="truncate text-lg font-bold tracking-[-0.03em] md:text-xl xl:text-2xl">
                   {currentNav ? t(`nav.${currentNav.labelKey}`) : t('common.appName')}
                 </p>
               </div>
 
               {authenticated ? (
-                <div className="hidden items-center gap-2 md:flex">
+                <div className="hidden items-center gap-2 lg:flex">
                   <StatusBadge tone={isOnline ? 'success' : 'danger'}>
                     {isOnline ? t('common.onlineStatus') : t('common.offlineStatus')}
                   </StatusBadge>
@@ -93,7 +94,13 @@ export function AppFrame({
 
       <Sheet open={navOpen} onOpenChange={setNavOpen}>
         <SheetContent side="left" className="w-[min(22rem,92vw)] bg-sidebar p-0 text-sidebar-foreground">
-          <div className="px-4 py-5">
+          <SheetHeader className="px-4 pt-0">
+            <VisuallyHidden>
+              <SheetTitle>{shell('navigationTitle')}</SheetTitle>
+              <SheetDescription>{shell('navigationDescription')}</SheetDescription>
+            </VisuallyHidden>
+          </SheetHeader>
+          <div className="px-4 pb-5 pt-14">
             <MobileRail locale={locale} pathname={pathname ?? ''} onNavigate={() => setNavOpen(false)} />
           </div>
         </SheetContent>
@@ -106,7 +113,7 @@ function DesktopRail({locale, pathname}: {locale: string; pathname: string}) {
   const t = useTranslations();
 
   return (
-    <div className="surface-grid sticky top-4 flex h-[calc(100dvh-2rem)] w-full flex-col rounded-[calc(var(--radius-card)+8px)] border border-sidebar-border bg-sidebar px-3 py-4 shadow-sm xl:px-4 xl:py-5">
+    <div className="surface-grid sticky top-4 flex h-[calc(100dvh-2rem)] w-full flex-col rounded-[calc(var(--radius-card)+8px)] border border-sidebar-border bg-sidebar px-2.5 py-3 shadow-sm lg:px-3 lg:py-4 xl:px-4 xl:py-5">
       <nav className="flex flex-1 flex-col gap-2">
         {NAV_ITEMS.map((item) => {
           const active = pathname === `/${locale}${item.href}` || (item.href === '/' && pathname === `/${locale}`);
@@ -117,13 +124,13 @@ function DesktopRail({locale, pathname}: {locale: string; pathname: string}) {
               href={item.href}
               aria-current={active ? 'page' : undefined}
               className={cn(
-                'group flex min-h-14 items-center gap-3 rounded-[var(--radius-large)] border px-4 text-sm font-semibold transition-colors',
+                'group flex min-h-12 items-center gap-3 rounded-[var(--radius-large)] border px-3 text-[13px] font-semibold transition-colors lg:min-h-13 lg:px-4 lg:text-sm',
                 active
                   ? 'border-primary/20 bg-sidebar-accent text-sidebar-accent-foreground'
                   : 'border-transparent text-muted-foreground hover:border-sidebar-border hover:bg-muted/60 hover:text-foreground',
               )}
             >
-              <item.icon className="size-5 shrink-0" />
+              <item.icon className="size-[1.125rem] shrink-0 lg:size-5" />
               <span className="truncate">{t(`nav.${item.labelKey}`)}</span>
             </Link>
           );

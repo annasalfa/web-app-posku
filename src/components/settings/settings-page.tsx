@@ -42,6 +42,7 @@ export function SettingsPage() {
             value={mounted ? theme ?? 'system' : 'system'}
             onChange={(value) => setTheme(value)}
             ariaLabel={common('theme')}
+            size="sm"
             options={[
               {label: common('light'), value: 'light'},
               {label: common('dark'), value: 'dark'},
@@ -55,6 +56,7 @@ export function SettingsPage() {
             value={locale as 'id' | 'en'}
             onChange={(value) => switchLocale(value as 'id' | 'en')}
             ariaLabel={common('language')}
+            size="sm"
             options={[
               {label: 'Bahasa Indonesia', value: 'id'},
               {label: 'English', value: 'en'},
@@ -74,10 +76,10 @@ export function SettingsPage() {
             </div>
           </div>
           <div className="rounded-[var(--radius-large)] border border-border bg-muted/35 p-4">
-            <p className="text-sm font-semibold">{t('realtimeChannel')}</p>
+            <p className="text-sm font-semibold">{t('sessionStatus')}</p>
             <div className="mt-3">
               <StatusBadge tone={hasAppwrite ? 'success' : 'neutral'}>
-                {hasAppwrite ? t('readyToSubscribe') : t('standby')}
+                {hasAppwrite ? t('ready') : t('standby')}
               </StatusBadge>
             </div>
           </div>

@@ -177,6 +177,7 @@ export function ReportsPage({
                 value={period}
                 onChange={(value) => setPeriod(value as Period)}
                 ariaLabel={t('periodFilter')}
+                size="sm"
                 options={[
                   {label: t('daily'), value: 'daily'},
                   {label: t('weekly'), value: 'weekly'},
@@ -190,6 +191,7 @@ export function ReportsPage({
               <Button
                 onClick={exportCsv}
                 variant="secondary"
+                size="sm"
                 loading={exporting === 'csv'}
                 disabled={exporting !== null || filteredTransactions.length === 0}
               >
@@ -198,6 +200,7 @@ export function ReportsPage({
               </Button>
               <Button
                 onClick={exportXlsx}
+                size="sm"
                 loading={exporting === 'xlsx'}
                 disabled={exporting !== null || filteredTransactions.length === 0}
               >

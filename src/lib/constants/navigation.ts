@@ -6,11 +6,10 @@ import {
   Receipt,
   Settings2,
   ShoppingBag,
-  Warehouse,
 } from 'lucide-react';
 
 export type NavItem = {
-  href: '/' | '/cashier' | '/history' | '/reports' | '/products' | '/stock' | '/settings';
+  href: '/' | '/cashier' | '/history' | '/reports' | '/products' | '/settings';
   icon: LucideIcon;
   labelKey: string;
 };
@@ -21,6 +20,5 @@ export const NAV_ITEMS: NavItem[] = [
   {href: '/history', icon: Receipt, labelKey: 'history'},
   {href: '/reports', icon: ClipboardList, labelKey: 'reports'},
   {href: '/products', icon: Package2, labelKey: 'products'},
-  {href: '/stock', icon: Warehouse, labelKey: 'stock'},
   {href: '/settings', icon: Settings2, labelKey: 'settings'},
 ];

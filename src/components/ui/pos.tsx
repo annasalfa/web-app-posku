@@ -1,6 +1,6 @@
 'use client';
 
-import type {ReactNode} from 'react';
+import type {ComponentPropsWithoutRef, ReactNode} from 'react';
 import {motion, useReducedMotion} from 'motion/react';
 import {AlertTriangle, Search} from 'lucide-react';
 
@@ -151,15 +151,19 @@ export function SearchField({
   value,
   placeholder,
   onChange,
+  className,
+  inputClassName,
 }: {
   id: string;
   label: string;
   value: string;
   placeholder?: string;
   onChange: (value: string) => void;
+  className?: string;
+  inputClassName?: string;
 }) {
   return (
-    <div className="space-y-2">
+    <div className={cn('space-y-2', className)}>
       <Label htmlFor={id} className="text-[11px] uppercase tracking-[0.08em] text-muted-foreground">
         {label}
       </Label>
@@ -170,7 +174,7 @@ export function SearchField({
           value={value}
           placeholder={placeholder}
           onChange={(event) => onChange(event.target.value)}
-          className="pl-11"
+          className={cn('pl-11', inputClassName)}
         />
       </div>
     </div>
@@ -182,19 +186,24 @@ export function SegmentedControl<T extends string>({
   options,
   onChange,
   className,
+  itemClassName,
   ariaLabel,
+  size = 'default',
 }: {
   value: T;
   options: Array<{label: string; value: T}>;
   onChange: (value: T) => void;
   className?: string;
+  itemClassName?: string;
   ariaLabel?: string;
+  size?: ComponentPropsWithoutRef<typeof ToggleGroup>['size'];
 }) {
   return (
     <ToggleGroup
       type="single"
       value={value}
       aria-label={ariaLabel}
+      size={size}
       onValueChange={(nextValue) => {
         if (nextValue) {
           onChange(nextValue as T);
@@ -203,7 +212,7 @@ export function SegmentedControl<T extends string>({
       className={className}
     >
       {options.map((option) => (
-        <ToggleGroupItem key={option.value} value={option.value}>
+        <ToggleGroupItem key={option.value} value={option.value} className={itemClassName}>
           {option.label}
         </ToggleGroupItem>
       ))}

@@ -13,3 +13,4 @@ export * from '@/components/ui/sheet';
 export * from '@/components/ui/table';
 export * from '@/components/ui/textarea';
 export * from '@/components/ui/toggle-group';
+export * from '@/components/ui/visually-hidden';

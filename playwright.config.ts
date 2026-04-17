@@ -6,6 +6,7 @@ loadEnvConfig(process.cwd());
 const authFile = `${process.cwd()}/playwright/.auth/user.json`;
 const playwrightPort = Number(process.env.PLAYWRIGHT_PORT ?? "3100");
 const baseURL = `http://127.0.0.1:${playwrightPort}`;
+const disableWebServer = process.env.PLAYWRIGHT_DISABLE_WEBSERVER === '1';
 
 export default defineConfig({
   testDir: "./e2e",
@@ -42,10 +43,12 @@ export default defineConfig({
       },
     },
   ],
-  webServer: {
-    command: `npm run start -- --port ${playwrightPort}`,
-    url: `${baseURL}/id/login`,
-    reuseExistingServer: true,
-    timeout: 120 * 1000,
-  },
+  webServer: disableWebServer
+    ? undefined
+    : {
+        command: `npm run start -- --port ${playwrightPort}`,
+        url: `${baseURL}/id/login`,
+        reuseExistingServer: true,
+        timeout: 120 * 1000,
+      },
 });
